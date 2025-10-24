@@ -18,12 +18,12 @@
 2. **협업 기능**: Presence 커서, 댓글/멘션/토픽 관리, 버전 비교 & 히스토리 복원.  
 3. **템플릿 & 워크플로우**: 페이지 템플릿, 블록 묶음 저장, 자동 스니펫.  
 4. **외부 연동**: GitHub, Figma, Google Drive 임베드 및 실시간 미리보기.  
-5. **검색/AI**: 문서 내 자연어 검색, AI Summarization, 문서 간 링크 추천.
+5. **검색**: 문서 내 자연어 검색, 문서 간 링크 추천.
 
 ### Chat (Slack/Discord 지향)
 1. **워크스페이스 다중 지원**: Slack처럼 워크스페이스 전환, 게스트/외부 공유 채널.  
 2. **통화 & 스테이지**: Discord의 Stage Channel + Voice Chat, 화면 공유.  
-3. **자동화/봇**: 슬래시 명령, Workflow Builder, Webhook 연동, AI 요약/태스크 추출.  
+3. **자동화**: 슬래시 명령, Workflow Builder, Webhook 연동.
 4. **고급 Thread/DM 경험**: 메시지 인용, 폴링, 설문, 워크플로우 카드 등.  
 5. **Presence & 알림**: 실시간 상태, 데스크톱/모바일 구분, Smart Notification Feed.
 

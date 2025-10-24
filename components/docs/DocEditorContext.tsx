@@ -3,12 +3,51 @@
 import React, { createContext, useContext } from 'react';
 import type { Editor } from '@tiptap/react';
 
-const DocEditorCtx = createContext<Editor | null>(null);
+export type DocPresencePeer = { id: string; name: string; color: string; ts: number };
 
-export function DocEditorProvider({ editor, children }: { editor: Editor | null; children: React.ReactNode }) {
-  return <DocEditorCtx.Provider value={editor}>{children}</DocEditorCtx.Provider>;
+type DocEditorContextValue = {
+  editor: Editor | null;
+  presence: DocPresencePeer[];
+  presenceSummary: string;
+  pageTitle: string;
+};
+
+const DocEditorCtx = createContext<DocEditorContextValue>({
+  editor: null,
+  presence: [],
+  presenceSummary: '',
+  pageTitle: '',
+});
+
+export function DocEditorProvider({
+  editor,
+  presence = [],
+  presenceSummary = '',
+  pageTitle = '',
+  children,
+}: {
+  editor: Editor | null;
+  presence?: DocPresencePeer[];
+  presenceSummary?: string;
+  pageTitle?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <DocEditorCtx.Provider value={{ editor, presence, presenceSummary, pageTitle }}>
+      {children}
+    </DocEditorCtx.Provider>
+  );
 }
 
 export function useDocEditor() {
-  return useContext(DocEditorCtx);
+  return useContext(DocEditorCtx).editor;
+}
+
+export function useDocCollaboration() {
+  const ctx = useContext(DocEditorCtx);
+  return {
+    presence: ctx.presence,
+    presenceSummary: ctx.presenceSummary,
+    pageTitle: ctx.pageTitle,
+  };
 }

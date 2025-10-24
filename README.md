@@ -29,6 +29,9 @@ bun dev
 │   │   │   │   └─ page.tsx        │  │  │  └─ # 개별 이슈 상세 보기 페이지
 │   │   │   ├─ layout.tsx          │  │  ├─ # Kanban layout 컴포넌트
 │   │   │   └─ page.tsx            │  │  └─ # Kanban 페이지 컴포넌트
+│   │   ├─ dashboard/              │  ├─ # 대비소드 관리 페이지
+│   │   │   ├─ layout.tsx          │  │  ├─ # Kanban layout 컴포넌트
+│   │   │   └─ page.tsx            │  │  └─ # 대시보드 페이지 컴포넌트
 │   │   ├─ docs/                   │  ├─ # 문서 관리 (노션 스타일) 페이지 
 │   │   │   ├─ layout.tsx          │  │  ├─ # 문서 layout 컴포넌트
 │   │   │   └─ page.tsx            │  │  └─ # 문서 페이지 컴포넌트
@@ -61,13 +64,15 @@ bun dev
 │   │   ├─ PinManager.tsx          │  ├─ # 고정 메시지 관리 UI
 │   │   ├─ ProfilePopover.tsx      │  ├─ # 사용자 프로필 팝오버
 │   │   ├─ ReactionBar.tsx         │  ├─ # 메시지 리액션 바 컴포넌트
-│   │   ├─ ReadBy.tsx             │  ├─ # 메시지 읽은 사용자 목록, 표시
+│   │   ├─ ReadBy.tsx              │  ├─ # 메시지 읽은 사용자 목록, 표시
 │   │   ├─ SavedModal.tsx          │  ├─ # 저장 메시지 전달
 │   │   ├─ SearchPanel.tsx         │  ├─ # 채팅 내 검색 패널
 │   │   └─ SlashCommands.ts        │  └─ #  채티이 슬래시 명령 처리 로직
 │   ├─ command/                    ├─ # 명령 팔레트 및 명령 관련 UI 컴포넌트
 │   │   ├─ CommandPalette.tsx      │  ├─ # 명령어 검색 및 실행 UI
 │   │   └─ Highlight.tsx           │  └─ # 텍스트 하이라이트용 UI 컴포넌트
+│   ├─ common/                     ├─ # 
+│   │   └─ Modal.tsx               │  └─ 
 │   ├─ docs/                       ├─ # 문서 편집/관리 관련 UI 컴포넌트
 │   │   ├─ DocEditorContext.tsx    │  ├─ # TipTap 문서 에디터 컨텍스트
 │   │   ├─ DocsRightPanel.tsx      │  ├─ # 문서 오른쪽 패널 (버전/댓글 등)
@@ -78,6 +83,8 @@ bun dev
 │   │   └─ SprintStats.tsx         │  └─ # 스프린트 진행 현황 컴포넌트
 │   ├─ layout/                     ├─ # 공통 레이아웃 컴포넌트
 │   │   └─ AppShell.tsx            │  └─ # 앱의 기본 틀, 레이아웃 래퍼
+│   ├─ providers/                  ├─ # 
+│   │   └─ ModalHost.tsx           │  └─ # 
 │   ├─ ui/                         ├─ # 각종 공용 UI 컴포넌트 (버튼, 입력창, 토스트 알림 등)
 │   │   ├─ button.tsx              │  ├─ # 버튼 컴포넌트
 │   │   ├─ Drawer.tsx              │  ├─ # 모바일용 드로어 패널 컴포넌트
@@ -86,23 +93,27 @@ bun dev
 │   │   ├─ ThemeToggle.tsx         │  ├─ # 다크/라이트 모드 전환 토글
 │   │   └─ Toast.tsx               │  └─ # 토스트 알림 컴포넌트
 │   ├─ views/                      ├─ # 페이지별 핵심 뷰 컴포넌트 모음 (각 기능별 주 뷰)
-│   │   ├─ index.tsx               │  ├─ # Chat/Kanban/Doc/Calendar 컴포넌트 모음 및 export
+│   │   ├─ calendar/               │  ├─ # 캘린더 뷰 컴포넌트 모음
+│   │   │   └─ CalendarView.tsx    │  │  └─ # 캘린더 주 뷰 컴포넌트
 │   │   ├─ chat/                   │  ├─ # 채팅 뷰 컴포넌트 모음
 │   │   │   └─ ChatView.tsx        │  │  └─ # 채팅 주 뷰 컴포넌트
-│   │   ├─ issues/                 │  ├─ # 이슈(프로젝트 관리) 뷰 컴포넌트 모음
-│   │   │   └─ KanbanView.tsx      │  │  └─ # Kanban 보드 뷰 컴포넌트
+│   │   ├─ dashboard/              │  ├─ # 대시보드 뷰 컴포넌트 모음
+│   │   │   └─ DashboardView.tsx   │  │  └─ # 대시보드 주 뷰 컴포넌트
 │   │   ├─ docs/                   │  ├─ # 문서 뷰 컴포넌트 모음
 │   │   │   └─ DocView.tsx         │  │  └─ # 문서 편집 및 표시 주 뷰 컴포넌트
-│   │   └─ calendar/               │  └─ # 캘린더 뷰 컴포넌트 모음
-│   │       └─ CalendarView.tsx    │     └─ # 캘린더 주 뷰 컴포넌트
+│   │   ├─ issues/                 │  ├─ # 이슈(프로젝트 관리) 뷰 컴포넌트 모음
+│   │   │   └─ KanbanView.tsx      │  │  └─ # Kanban 보드 뷰 
+│   │   ├─ settings/               │  ├─ # 
+│   │   │   ├─ DashboardSett       │  │  │
+│   │   │   │  ingsModal.tsx       │  │  ├─ # 
+│   │   │   └─ SettingsModal.tsx   │  │  └─ # 
+│   │   └─ index.tsx               │  └─ # Chat/Kanban/Doc/Calendar 컴포넌트 모음 및 export
 │   ├─ Sidebar.tsx                 ├─ # 좌측 워크스페이스 및 채널 목록 사이드바
 │   ├─ Topbar.tsx                  ├─ # 상단 검색, 알림, 명령 팔레트 영역
 │   └─ RightPanel.tsx              └─ # 우측 스레드 및 AI 패널 영역
 │
 ├─ docs/                           # 문서 관련 정리 및 가이드 파일들
-│   ├─ DEV_GUIDE.md                ├─ # 개발 가이드 문서
-│   ├─ PROJECT_NOTES.md            ├─ # 프로젝트 메모 및 노트
-│   └─ README.md                   └─ # 프로젝트 기본 안내 문서
+│   └─ ...                          └─ # 상세문서는 직접 읽을수 있도록
 │
 ├─ lib/                            # 각종 유틸리티 및 헬퍼 함수 모음
 │   ├─ api.ts                      ├─ # API 호출 함수 모음

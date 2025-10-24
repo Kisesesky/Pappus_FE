@@ -13,7 +13,8 @@ import {
   Hash,
   Star,
   VolumeX,
-  PlusCircle
+  PlusCircle,
+  PanelsTopLeft,
 } from "lucide-react";
 import clsx from "clsx";
 import { useChat } from "@/store/chat";
@@ -240,6 +241,7 @@ export default function Sidebar() {
         <div>
           <div className="text-xs text-muted mb-2">Projects</div>
           <div className="space-y-1">
+            <NavItem href="/app/dashboard" label="Dashboard" icon={PanelsTopLeft} />
             <NavItem href="/app/chat" label="Chat" icon={MessageSquare} />
             <NavItem href="/app/issues" label="Issues" icon={FolderKanban} />
             <NavItem href="/app/docs" label="Docs" icon={BookText} />

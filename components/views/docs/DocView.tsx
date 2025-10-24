@@ -22,12 +22,41 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import { TableHeader } from "@tiptap/extension-table-header";
 
 import {
-  Bold, Italic, Code, List, ListOrdered, CheckSquare, Plus, Table as TableIcon,
-  Rows, Columns, Trash2, LayoutPanelTop, LayoutPanelLeft, File as FileIcon, Image as ImageIcon,
-  History as HistoryIcon, Save, AlignLeft, AlignCenter, AlignRight, Droplet, Palette,
-  Type as TypeIcon
+  Bold,
+  Italic,
+  Code,
+  List,
+  ListOrdered,
+  CheckSquare,
+  Plus,
+  Table as TableIcon,
+  Rows,
+  Columns,
+  Trash2,
+  LayoutPanelTop,
+  LayoutPanelLeft,
+  File as FileIcon,
+  Image as ImageIcon,
+  History as HistoryIcon,
+  Save,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Droplet,
+  Palette,
+  Info,
+  AlertTriangle,
+  Timer,
+  GitBranch,
+  Type as TypeIcon,
+  CheckCircle2,
+  LayoutDashboard,
+  Database,
+  Cloud,
+  Sparkles,
+  Plug,
 } from "lucide-react";
-import { Node, mergeAttributes } from "@tiptap/core";
+import { Node as TiptapNode, mergeAttributes } from "@tiptap/core";
 
 // ✅ TipTap 컨텍스트: DocsRightPanel이 editor를 읽도록 공급
 import { DocEditorProvider } from "@/components/docs/DocEditorContext";
@@ -100,10 +129,137 @@ const AUTOSAVE_MIN_DELTA   = 200;      // 200자 이상 변경
 const SNAPSHOT_RETENTION    = 20;       // 최신 20개
 const SNAPSHOT_RETENTION_DAYS = 30;     // 최근 30일
 
+const PRESENCE_CHANNEL = "fd.docs.presence.v1";
+
+type DocPresencePeer = { id: string; name: string; color: string; ts: number };
+type DocTemplateId = "meeting-notes" | "project-brief" | "retro";
+type DocTemplateDescriptor = { id: DocTemplateId; name: string; description: string; content: string };
+type EmbedKind = "github" | "figma" | "drive";
+
+const DOC_TEMPLATES: DocTemplateDescriptor[] = [
+  {
+    id: "meeting-notes",
+    name: "미팅 노트",
+    description: "Agenda, 논의 내용, 액션 아이템을 빠르게 정리",
+    content: `<h1>📝 회의 제목</h1>
+<h2 id="agenda">📌 Agenda</h2>
+<ul>
+  <li>논의할 주제 1</li>
+  <li>논의할 주제 2</li>
+</ul>
+<h2 id="discussion">🗣️ Discussion</h2>
+<p>논의 내용을 요약합니다.</p>
+<h2 id="decisions">✅ 결정 사항</h2>
+<ul>
+  <li>결정 1</li>
+  <li>결정 2</li>
+</ul>
+<h2 id="actions">🚀 Action Items</h2>
+<ul>
+  <li>[ ] 담당자 - 작업 내용</li>
+  <li>[ ] 담당자 - 작업 내용</li>
+</ul>`,
+  },
+  {
+    id: "project-brief",
+    name: "프로젝트 브리프",
+    description: "목표, KPI, 타임라인을 한눈에",
+    content: `<h1>📦 프로젝트 이름</h1>
+<div class="doc-callout doc-callout-info">
+  <span class="doc-callout-icon">ℹ️</span>
+  <div>
+    <div class="doc-callout-heading">핵심 목표</div>
+    <div class="doc-callout-body">프로젝트의 가장 중요한 목적을 요약하세요.</div>
+  </div>
+</div>
+<h2 id="overview">개요</h2>
+<p>프로젝트 배경과 해결하려는 문제를 설명합니다.</p>
+<h2 id="kpi">핵심 KPI</h2>
+<ul>
+  <li>KPI 1</li>
+  <li>KPI 2</li>
+</ul>
+<h2 id="timeline">타임라인</h2>
+<div class="doc-timeline">
+  <div class="doc-timeline-row">
+    <div class="doc-timeline-dot"></div>
+    <div>
+      <div class="doc-timeline-title">마일스톤 1</div>
+      <div class="doc-timeline-desc">설명을 입력하세요.</div>
+      <div class="doc-timeline-date">2024-01-01</div>
+    </div>
+  </div>
+  <div class="doc-timeline-row">
+    <div class="doc-timeline-dot"></div>
+    <div>
+      <div class="doc-timeline-title">마일스톤 2</div>
+      <div class="doc-timeline-desc">설명을 입력하세요.</div>
+      <div class="doc-timeline-date">2024-02-01</div>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: "retro",
+    name: "스프린트 회고",
+    description: "잘된 점/아쉬운 점/실행 계획",
+    content: `<h1>🔄 스프린트 회고</h1>
+<h2 id="went-well">😀 잘된 점</h2>
+<ul>
+  <li>사례 1</li>
+  <li>사례 2</li>
+</ul>
+<h2 id="improve">😅 아쉬웠던 점</h2>
+<ul>
+  <li>개선 포인트 1</li>
+  <li>개선 포인트 2</li>
+</ul>
+<h2 id="actions-retro">🚀 다음 액션</h2>
+<div class="doc-board">
+  <div class="doc-board-column">
+    <div class="doc-board-column-title">TODO</div>
+    <div class="doc-board-card">액션 아이템을 작성하세요</div>
+  </div>
+  <div class="doc-board-column">
+    <div class="doc-board-column-title">DOING</div>
+    <div class="doc-board-card doc-board-card-muted">진행 중인 작업</div>
+  </div>
+  <div class="doc-board-column">
+    <div class="doc-board-column-title">DONE</div>
+    <div class="doc-board-card doc-board-card-muted">완료된 작업</div>
+  </div>
+</div>`,
+  },
+];
+
+const EMBED_META: Record<EmbedKind, { label: string; hint: string; icon: string; sample: string }> = {
+  github: { label: "GitHub", hint: "Pull Request, Issue, Repo 링크를 붙여넣기", icon: "🐙", sample: "https://github.com/flowdash/example/pull/42" },
+  figma: { label: "Figma", hint: "디자인 파일, 프로토타입 URL 임베드", icon: "🎨", sample: "https://www.figma.com/file/..." },
+  drive: { label: "Google Drive", hint: "문서, 스프레드시트 공유 링크", icon: "☁️", sample: "https://drive.google.com/file/..." },
+};
+
+function colorFromId(seed: string) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue} 70% 55%)`;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /* ────────────────────────────────────────────────────────────────────── */
 /* 커스텀 노드: 첨부 블록                                                 */
 /* ────────────────────────────────────────────────────────────────────── */
-const Attachment = Node.create({
+const Attachment = (TiptapNode as unknown as { create: typeof TiptapNode.create }).create({
   name: 'attachment',
   group: 'block',
   draggable: true,
@@ -118,7 +274,7 @@ const Attachment = Node.create({
     };
   },
   parseHTML() { return [{ tag: 'div[data-type="attachment"]' }]; },
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'attachment', class: 'attachment-block' }),
       ['a', { href: HTMLAttributes.href, download: HTMLAttributes.name, class: 'attachment-link' },
         ['span', { class: 'attachment-icon' }, '📎'],
@@ -139,7 +295,7 @@ const Attachment = Node.create({
 /* ────────────────────────────────────────────────────────────────────── */
 /* 커스텀 노드: 업로드 플레이스홀더(인라인 진행률)                         */
 /* ────────────────────────────────────────────────────────────────────── */
-const UploadPlaceholder = Node.create({
+const UploadPlaceholder = (TiptapNode as unknown as { create: typeof TiptapNode.create }).create({
   name: 'uploadPlaceholder',
   group: 'block',
   atom: true,
@@ -154,7 +310,7 @@ const UploadPlaceholder = Node.create({
     };
   },
   parseHTML() { return [{ tag: 'div[data-type="upload-ph"]' }]; },
-  renderHTML({ HTMLAttributes }) {
+  renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
     const pct = Number(HTMLAttributes.percent || 0);
     const kind = HTMLAttributes.kind === 'image' ? '🖼️' : '📎';
     return ['div', mergeAttributes(HTMLAttributes, {
@@ -244,6 +400,14 @@ export default function DocView() {
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashPos, setSlashPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [histOpen, setHistOpen] = useState(false);
+  const me = useMemo(() => ({ id: "u-you", name: "You", color: colorFromId("u-you") }), []);
+  const [presenceMap, setPresenceMap] = useState<Record<string, DocPresencePeer>>({});
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [integrationOpen, setIntegrationOpen] = useState(false);
+  const presenceChannelRef = useRef<BroadcastChannel | null>(null);
+  const templateMenuRef = useRef<HTMLDivElement | null>(null);
+  const integrationMenuRef = useRef<HTMLDivElement | null>(null);
+
 
   // 파일 입력 ref
   const imgInputRef = useRef<HTMLInputElement>(null);
@@ -272,6 +436,15 @@ export default function DocView() {
 
   // 테이블 확장 존재 여부
   const hasTable = Boolean(Table && (Table as any).configure);
+  const pageTitle = useMemo(() => {
+    const preset: Record<string, string> = {
+      spec: "제품 스펙 문서",
+      retro: "스프린트 회고",
+      roadmap: "제품 로드맵",
+    };
+    const fallback = pageId ? pageId.charAt(0).toUpperCase() + pageId.slice(1) : "문서";
+    return preset[pageId] ?? fallback;
+  }, [pageId]);
 
   const editor = useEditor(
     {
@@ -301,6 +474,7 @@ export default function DocView() {
         handleTextInput: (view, from, _to, text) => {
           if (text === "/") {
             const rect = view.coordsAtPos(from);
+
             setSlashPos({ x: rect.left, y: rect.bottom + 6 });
             setSlashOpen(true);
           }
@@ -326,12 +500,111 @@ export default function DocView() {
     [pageId, hasTable]
   );
 
+  const peersList = useMemo(() => Object.values(presenceMap).sort((a, b) => a.name.localeCompare(b.name)), [presenceMap]);
+  const peers = useMemo(() => peersList.filter((p) => Date.now() - p.ts < 15000), [peersList]);
+  const others = useMemo(() => peers.filter((p) => p.id !== me.id), [peers, me.id]);
+  const primaryPeers = useMemo(() => others.slice(0, 3), [others]);
+  const overflowPeers = useMemo(() => Math.max(0, others.length - primaryPeers.length), [others, primaryPeers]);
+  const myPresence = presenceMap[me.id];
+  const fallbackMe = useMemo<DocPresencePeer>(() => ({
+    id: me.id,
+    name: me.name,
+    color: me.color,
+    ts: Date.now(),
+  }), [me]);
+  const activePeers = useMemo(() => {
+    if (peers.length === 0) {
+      return [myPresence ?? fallbackMe];
+    }
+    return peers;
+  }, [peers, myPresence, fallbackMe]);
+  const stackPeers = useMemo(() => {
+    const base = myPresence ? [myPresence] : [fallbackMe];
+    return [...base, ...primaryPeers];
+  }, [myPresence, fallbackMe, primaryPeers]);
+  const presenceSummary = others.length ? `${others.length}명 함께 작업 중` : "혼자 작업 중";
+  const presenceTooltip = activePeers.map((p) => p.name).join(", ") || "협업자 없음";
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") return;
+    const bc = new BroadcastChannel(PRESENCE_CHANNEL);
+    presenceChannelRef.current = bc;
+    const sendPing = () => {
+      const payload = { type: "presence", docId: pageId, user: { ...me }, ts: Date.now() };
+      bc.postMessage(payload);
+      setPresenceMap((prev) => ({ ...prev, [me.id]: { ...me, ts: payload.ts } }));
+    };
+    const onMessage = (event: MessageEvent) => {
+      const data: any = event.data || {};
+      if (data.type !== "presence" || data.docId !== pageId || !data.user) return;
+      setPresenceMap((prev) => ({
+        ...prev,
+        [data.user.id]: {
+          id: data.user.id,
+          name: data.user.name || "Collaborator",
+          color: data.user.color || colorFromId(data.user.id),
+          ts: data.ts || Date.now(),
+        },
+      }));
+    };
+    bc.addEventListener("message", onMessage);
+    sendPing();
+    const pingTimer = window.setInterval(sendPing, 4000);
+    return () => {
+      window.clearInterval(pingTimer);
+      bc.removeEventListener("message", onMessage);
+      bc.close();
+      presenceChannelRef.current = null;
+      setPresenceMap((prev) => {
+        const next = { ...prev };
+        delete next[me.id];
+        return next;
+      });
+    };
+  }, [pageId, me]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const cutoff = Date.now() - 15000;
+      setPresenceMap((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((key) => {
+          if (next[key].ts < cutoff) delete next[key];
+        });
+        return next;
+      });
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+
   useEffect(() => {
     if (!editor) return;
-    const onEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setSlashOpen(false); };
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSlashOpen(false);
+        setTemplateOpen(false);
+        setIntegrationOpen(false);
+      }
+    };
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
   }, [editor]);
+
+  useEffect(() => {
+    if (!templateOpen && !integrationOpen) return;
+    const onDown = (event: MouseEvent) => {
+      const target = event.target as globalThis.Node | null;
+      if (templateOpen && templateMenuRef.current && target && !templateMenuRef.current.contains(target)) {
+        setTemplateOpen(false);
+      }
+      if (integrationOpen && integrationMenuRef.current && target && !integrationMenuRef.current.contains(target)) {
+        setIntegrationOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [templateOpen, integrationOpen]);
 
   /* ── 스냅샷(버전) ───────────────────────────────────────────── */
   type Snapshot = { id: string; ts: number; html: string; note: string };
@@ -379,6 +652,136 @@ export default function DocView() {
     saveSnapshots(next);
   };
 
+  type CalloutVariant = "info" | "success" | "warning" | "danger";
+
+  const insertCallout = (variant: CalloutVariant) => {
+    if (!editor) return;
+    const meta: Record<CalloutVariant, { icon: string; title: string }> = {
+      info: { icon: "ℹ️", title: "정보" },
+      success: { icon: "✅", title: "성공" },
+      warning: { icon: "⚠️", title: "주의" },
+      danger: { icon: "⛔", title: "위험" },
+    };
+    const { icon, title } = meta[variant];
+    const html = `<div class="doc-callout doc-callout-${variant}">
+  <span class="doc-callout-icon">${icon}</span>
+  <div>
+    <div class="doc-callout-heading">${title} 콜아웃</div>
+    <div class="doc-callout-body">메시지를 입력하세요.</div>
+  </div>
+</div><p></p>`;
+    editor.chain().focus().insertContent(html).run();
+  };
+
+  const insertTimelineBlock = () => {
+    if (!editor) return;
+    const html = `<div class="doc-timeline">
+  <div class="doc-timeline-row">
+    <div class="doc-timeline-dot"></div>
+    <div>
+      <div class="doc-timeline-title">키 이벤트</div>
+      <div class="doc-timeline-desc">내용을 채워 넣으세요.</div>
+      <div class="doc-timeline-date">${new Date().toLocaleDateString()}</div>
+    </div>
+  </div>
+  <div class="doc-timeline-row">
+    <div class="doc-timeline-dot"></div>
+    <div>
+      <div class="doc-timeline-title">다음 단계</div>
+      <div class="doc-timeline-desc">예정된 일정을 기록합니다.</div>
+      <div class="doc-timeline-date">${new Date(Date.now() + 86400000).toLocaleDateString()}</div>
+    </div>
+  </div>
+</div><p></p>`;
+    editor.chain().focus().insertContent(html).run();
+  };
+
+  const insertKanbanBoard = () => {
+    if (!editor) return;
+    const html = `<div class="doc-board">
+  <div class="doc-board-column">
+    <div class="doc-board-column-title">Todo</div>
+    <div class="doc-board-card">해야 할 작업을 등록하세요</div>
+    <div class="doc-board-card doc-board-card-muted">+ 카드 추가</div>
+  </div>
+  <div class="doc-board-column">
+    <div class="doc-board-column-title">In Progress</div>
+    <div class="doc-board-card">진행 중 작업</div>
+  </div>
+  <div class="doc-board-column">
+    <div class="doc-board-column-title">Done</div>
+    <div class="doc-board-card doc-board-card-muted">완료 항목</div>
+  </div>
+</div><p></p>`;
+    editor.chain().focus().insertContent(html).run();
+  };
+
+  const insertDatabaseView = () => {
+    if (!editor) return;
+    if (!hasTable) {
+      alert("Table 확장이 설치되지 않았습니다. 패키지를 설치해 주세요.");
+      return;
+    }
+    const html = `<table class="doc-database">
+  <thead>
+    <tr>
+      <th>이름</th>
+      <th>담당자</th>
+      <th>상태</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>샘플 항목 A</td>
+      <td>홍길동</td>
+      <td>진행 중</td>
+    </tr>
+    <tr>
+      <td>샘플 항목 B</td>
+      <td>김영희</td>
+      <td>대기</td>
+    </tr>
+  </tbody>
+</table><p></p>`;
+    editor.chain().focus().insertContent(html).run();
+  };
+
+  const insertEmbedCard = (kind: EmbedKind, url: string) => {
+    if (!editor) return;
+    const meta = EMBED_META[kind];
+    if (!meta) return;
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    const safeUrl = escapeHtml(trimmed);
+    const html = `<div class="doc-embed doc-embed-${kind}">
+  <div class="doc-embed-icon">${meta.icon}</div>
+  <div class="doc-embed-body">
+    <div class="doc-embed-title">${meta.label} 링크</div>
+    <a class="doc-embed-link" href="${safeUrl}" target="_blank" rel="noopener">${safeUrl}</a>
+    <div class="doc-embed-hint">${meta.hint}</div>
+  </div>
+</div><p></p>`;
+    editor.chain().focus().insertContent(html).run();
+  };
+
+  const applyTemplate = (id: DocTemplateId) => {
+    if (!editor) return;
+    const template = DOC_TEMPLATES.find((tpl) => tpl.id === id);
+    if (!template) return;
+    editor.chain().focus().insertContent(`${template.content}<p></p>`).run();
+    setTemplateOpen(false);
+  };
+
+  const promptIntegration = (kind: EmbedKind) => {
+    const meta = EMBED_META[kind];
+    if (!meta) return;
+    const url = window.prompt(`${meta.label} 링크를 입력하세요`, meta.sample) || "";
+    if (url.trim()) {
+      insertEmbedCard(kind, url);
+    }
+    setIntegrationOpen(false);
+  };
+
   /* ── 슬래시 명령 실행 ─────────────────────────────────────────── */
   const runCmd = async (id: string) => {
     if (!editor) return;
@@ -393,6 +796,16 @@ export default function DocView() {
         else alert("Table 확장이 설치되지 않았습니다. 패키지를 설치해 주세요.");
         break;
       case "image": imgInputRef.current?.click(); break;
+      case "callout-info": insertCallout("info"); break;
+      case "callout-success": insertCallout("success"); break;
+      case "callout-warning": insertCallout("warning"); break;
+      case "callout-danger": insertCallout("danger"); break;
+      case "timeline": insertTimelineBlock(); break;
+      case "kanban": insertKanbanBoard(); break;
+      case "database": insertDatabaseView(); break;
+      case "embed-github": { const url = window.prompt("GitHub URL", "https://github.com/"); if (url) insertEmbedCard("github", url); break; }
+      case "embed-figma": { const url = window.prompt("Figma URL", "https://www.figma.com/file/"); if (url) insertEmbedCard("figma", url); break; }
+      case "embed-drive": { const url = window.prompt("Google Drive URL", "https://drive.google.com/file/"); if (url) insertEmbedCard("drive", url); break; }
       case "file":  fileInputRef.current?.click(); break;
     }
   };
@@ -485,15 +898,86 @@ export default function DocView() {
   return (
     <DocEditorProvider editor={editor}>
       <div className="h-full flex flex-col">
-        <div className="h-12 px-4 border-b border-border flex items-center justify-between">
-          <div className="font-semibold">Docs</div>
+        <div className="h-14 px-4 border-b border-border flex items-center justify-between bg-panel/70 backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="text-xs uppercase tracking-[0.08em] text-muted">문서</div>
+              <div className="text-base font-semibold leading-snug">{pageTitle}</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="doc-presence-stack" title={presenceTooltip}>
+                {stackPeers.map((peer) => (
+                  <span
+                    key={peer.id}
+                    className="doc-presence-badge"
+                    style={{ backgroundColor: peer.color }}
+                    title={peer.name}
+                  >
+                    {(peer.name || "??").slice(0, 2).toUpperCase()}
+                  </span>
+                ))}
+                {overflowPeers > 0 && <span className="doc-presence-more">+{overflowPeers}</span>}
+              </div>
+              <div className="text-xs text-muted">{presenceSummary}</div>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
-            <button className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
-                    onClick={manualSaveSnapshot} title="현재 문서를 스냅샷으로 저장">
+            <div className="relative" ref={templateMenuRef}>
+              <button
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+                onClick={() => setTemplateOpen((prev) => !prev)}
+              >
+                <Sparkles size={14}/> 템플릿
+              </button>
+              {templateOpen && (
+                <div className="doc-menu">
+                  <div className="doc-menu-header">페이지 템플릿</div>
+                  {DOC_TEMPLATES.map((tpl) => (
+                    <button key={tpl.id} className="doc-menu-item" onClick={() => applyTemplate(tpl.id)}>
+                      <div className="doc-menu-item-title">{tpl.name}</div>
+                      <div className="doc-menu-item-desc">{tpl.description}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="relative" ref={integrationMenuRef}>
+              <button
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+                onClick={() => setIntegrationOpen((prev) => !prev)}
+              >
+                <Plug size={14}/> 연동
+              </button>
+              {integrationOpen && (
+                <div className="doc-menu">
+                  <div className="doc-menu-header">외부 연동</div>
+                  {(Object.keys(EMBED_META) as EmbedKind[]).map((key) => {
+                    const meta = EMBED_META[key];
+                    return (
+                      <button key={key} className="doc-menu-item" onClick={() => promptIntegration(key)}>
+                        <span className="doc-menu-icon">{meta.icon}</span>
+                        <div>
+                          <div className="doc-menu-item-title">{meta.label}</div>
+                          <div className="doc-menu-item-desc">{meta.hint}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            <button
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+              onClick={manualSaveSnapshot}
+              title="현재 문서를 스냅샷으로 저장"
+            >
               <Save size={14}/> 저장
             </button>
-            <button className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
-                    onClick={()=> setHistOpen(true)} title="버전 히스토리">
+            <button
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+              onClick={() => setHistOpen(true)}
+              title="버전 히스토리"
+            >
               <HistoryIcon size={14}/> 히스토리
             </button>
           </div>
@@ -583,9 +1067,10 @@ export default function DocView() {
         {slashOpen && (
           <div
             style={{ position: "fixed", left: slashPos.x, top: slashPos.y, zIndex: 40 }}
-            className="rounded-md border border-border bg-panel shadow-panel text-sm"
+            className="doc-slash-menu rounded-md border border-border bg-panel shadow-panel text-sm"
             onMouseLeave={() => setSlashOpen(false)}
           >
+            <div className="doc-slash-label">기본 블록</div>
             <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("todo")}><CheckSquare size={14}/> 체크리스트</button>
             <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("ul")}><List size={14}/> 글머리</button>
             <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("ol")}><ListOrdered size={14}/> 번호 목록</button>
@@ -594,6 +1079,23 @@ export default function DocView() {
                     onClick={()=> runCmd("table")} disabled={!hasTable}><TableIcon size={14}/> 표 (3×3)</button>
             <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("image")}><ImageIcon size={14}/> 이미지</button>
             <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("file")}><FileIcon size={14}/> 파일</button>
+
+            <div className="doc-slash-divider" />
+            <div className="doc-slash-label">고급 블록</div>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-info")}><Info size={14}/> 정보 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-success")}><CheckCircle2 size={14}/> 성공 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-warning")}><AlertTriangle size={14}/> 경고 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-danger")}><AlertTriangle size={14}/> 위험 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("timeline")}><Timer size={14}/> 타임라인</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("kanban")}><LayoutDashboard size={14}/> 칸반 보드</button>
+            <button className={`flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60 ${!hasTable?'opacity-50 cursor-not-allowed':''}`}
+                    onClick={()=> runCmd("database")} disabled={!hasTable}><Database size={14}/> 데이터 뷰</button>
+
+            <div className="doc-slash-divider" />
+            <div className="doc-slash-label">외부 연동</div>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("embed-github")}><GitBranch size={14}/> GitHub 카드</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("embed-figma")}><Palette size={14}/> Figma 임베드</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("embed-drive")}><Cloud size={14}/> Drive 임베드</button>
           </div>
         )}
 
@@ -620,6 +1122,7 @@ export default function DocView() {
                 <button className="text-xs px-3 py-1 rounded border border-border hover:bg-subtle/60" onClick={()=> setHistOpen(false)}>닫기</button>
               </div>
             </div>
+
           </div>
         )}
 
@@ -642,6 +1145,57 @@ export default function DocView() {
           .upload-ph-bar { height:6px; border-radius:999px; background: color-mix(in oklab, var(--background) 92%, black 8%); overflow:hidden; }
           .upload-ph-bar-fill { height:100%; background: currentColor; opacity:0.5; }
 
+          .doc-presence-stack { display:flex; align-items:center; gap:4px; }
+          .doc-presence-badge { width:26px; height:26px; border-radius:999px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:white; box-shadow:0 0 0 2px var(--background); }
+          .doc-presence-more { min-width:26px; height:26px; border-radius:999px; background: color-mix(in oklab, var(--background) 80%, black 20%); color: white; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; box-shadow:0 0 0 2px var(--background); }
+
+          .doc-menu { position:absolute; right:0; margin-top:8px; min-width:220px; border:1px solid var(--border); border-radius:12px; background: color-mix(in oklab, var(--background) 96%, black 4%); box-shadow:0 20px 40px rgba(0,0,0,0.18); padding:8px; z-index:45; display:flex; flex-direction:column; gap:4px; }
+          .dark .doc-menu, :root.dark .doc-menu { background: color-mix(in oklab, var(--background) 92%, white 8%); box-shadow:0 16px 32px rgba(0,0,0,0.5); }
+          .doc-menu-header { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color: var(--muted-foreground); padding:4px 6px; }
+          .doc-menu-item { display:flex; gap:10px; width:100%; text-align:left; padding:8px; border-radius:8px; border:none; background:transparent; cursor:pointer; }
+          .doc-menu-item:hover { background: color-mix(in oklab, var(--background) 88%, black 12%); }
+          .doc-menu-item-title { font-size:13px; font-weight:600; }
+          .doc-menu-item-desc { font-size:12px; color: var(--muted-foreground); margin-top:2px; }
+          .doc-menu-icon { width:28px; height:28px; border-radius:8px; background: color-mix(in oklab, var(--background) 88%, black 12%); display:flex; align-items:center; justify-content:center; font-size:15px; }
+
+          .doc-slash-menu { width:244px; padding:6px 0; backdrop-filter:blur(12px); }
+          .doc-slash-label { font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color: var(--muted-foreground); padding:4px 16px; }
+          .doc-slash-divider { height:1px; margin:6px 12px; background: color-mix(in oklab, var(--background) 80%, black 20%); opacity:0.4; }
+
+          .doc-callout { display:flex; gap:12px; padding:12px 14px; border-radius:10px; border:1px solid transparent; margin:16px 0; align-items:flex-start; }
+          .doc-callout-icon { font-size:18px; line-height:1; }
+          .doc-callout-heading { font-weight:600; margin-bottom:4px; }
+          .doc-callout-body { font-size:14px; color: var(--muted-foreground); }
+          .doc-callout-info { background: rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.3); }
+          .doc-callout-success { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); }
+          .doc-callout-warning { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.3); }
+          .doc-callout-danger { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.32); }
+
+          .doc-timeline { border-left:2px solid color-mix(in oklab, var(--background) 40%, black 60%); padding-left:22px; margin:16px 0; display:flex; flex-direction:column; gap:18px; }
+          .doc-timeline-row { position:relative; }
+          .doc-timeline-dot { position:absolute; left:-34px; top:4px; width:14px; height:14px; border-radius:999px; background: color-mix(in oklab, var(--background) 30%, black 70%); border:2px solid var(--background); box-shadow:0 0 0 2px color-mix(in oklab, var(--background) 40%, black 60%); }
+          .doc-timeline-title { font-weight:600; }
+          .doc-timeline-desc { font-size:13px; color: var(--muted-foreground); margin:3px 0; }
+          .doc-timeline-date { font-size:12px; color: var(--muted-foreground); }
+
+          .doc-board { display:flex; gap:16px; overflow-x:auto; padding:10px 0; margin:16px 0; }
+          .doc-board-column { min-width:180px; background: color-mix(in oklab, var(--background) 92%, black 8%); border-radius:12px; border:1px solid var(--border); padding:12px; display:flex; flex-direction:column; gap:10px; }
+          .doc-board-column-title { font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color: color-mix(in oklab, var(--background) 30%, black 70%); }
+          .doc-board-card { padding:10px; background:white; border-radius:10px; border:1px solid var(--border); font-size:13px; box-shadow:0 4px 12px rgba(15,23,42,0.08); }
+          .dark .doc-board-card, :root.dark .doc-board-card { background: color-mix(in oklab, var(--background) 92%, white 8%); }
+          .doc-board-card-muted { opacity:0.7; font-style:italic; }
+
+          .doc-database { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; background: color-mix(in oklab, var(--background) 98%, black 2%); border-radius:10px; overflow:hidden; }
+          .doc-database th, .doc-database td { border:1px solid color-mix(in oklab, var(--background) 80%, black 20%); padding:8px 10px; text-align:left; }
+          .doc-database thead { background: color-mix(in oklab, var(--background) 86%, black 14%); color: color-mix(in oklab, var(--background) 10%, black 90%); }
+
+          .doc-embed { display:flex; gap:12px; align-items:center; padding:14px; border-radius:12px; border:1px solid var(--border); margin:14px 0; background: color-mix(in oklab, var(--background) 94%, black 6%); }
+          .doc-embed-icon { width:40px; height:40px; border-radius:10px; background: color-mix(in oklab, var(--background) 88%, black 12%); display:flex; align-items:center; justify-content:center; font-size:20px; }
+          .doc-embed-title { font-weight:600; font-size:14px; }
+          .doc-embed-link { display:block; font-size:13px; color: inherit; text-decoration:none; word-break:break-all; margin-top:2px; }
+          .doc-embed-link:hover { text-decoration:underline; }
+          .doc-embed-hint { font-size:12px; color: var(--muted-foreground); margin-top:2px; }
+
           :root { --border: hsl(240 4% 16% / 0.18); --muted-foreground: hsl(240 5% 40%); --background: white; }
           .dark :root, :root.dark { --border: hsl(0 0% 100% / 0.14); --muted-foreground: hsl(240 5% 70%); --background: #0b0b0c; }
         `}</style>
@@ -649,3 +1203,4 @@ export default function DocView() {
     </DocEditorProvider>
   );
 }
+
