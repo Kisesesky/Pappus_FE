@@ -158,8 +158,10 @@ function MessageRow({
 
   return (
     <div
-      className={`relative group/message ${pad} px-2 -mx-2 rounded-md transition-colors duration-150 ease-out ${
-        selected ? 'ring-1 ring-brand/60 bg-subtle/25' : 'hover:bg-subtle/15'
+      className={`group/message relative ${pad} -mx-2 rounded-xl border border-transparent px-3 transition-all duration-150 ease-out ${
+        selected
+          ? 'border-brand/50 bg-brand/10 shadow-sm ring-1 ring-brand/40'
+          : 'hover:border-border/60 hover:bg-subtle/20 hover:shadow-sm'
       }`}
       onContextMenu={(e)=> { e.preventDefault(); openMenu(e, m, isMine); }}
       onClick={(e)=> {
@@ -514,9 +516,8 @@ export default function ChatView() {
     setMenu({ open:true, x: e.clientX, y: e.clientY, msg: m, mine });
   };
   const closeMenu = () => setMenu({ open:false, x:0, y:0 });
-
-  const pinIds = pinnedByChannel[channelId] || [];
-  const savedIds = savedByUser[me.id] || [];
+  const typingList = typingUsers[channelId] || [];
+  const typingText = typingList.length ? `${typingList.join(", ")} is typing...` : "";
 
   const onMenuAction = async (id: any) => {
     const m = menu.msg!;
@@ -591,15 +592,11 @@ export default function ChatView() {
   };
 
   // 채널/DM 스위처 데이터
-  const dmUsers = useMemo(() => Object.values(users).filter(u => u.id !== me.id), [users, me.id]);
 
   const onTyping = (typing: boolean) => {
     setTyping(typing);
     rtbroadcast({ type: 'typing', channelId, userId: me.id, userName: me.name, on: typing });
   };
-  const typingList = typingUsers[channelId] || [];
-  const typingText = typingList.length ? `${typingList.join(", ")} 입력 중…` : "";
-
   const [pinOpen, setPinOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
 
@@ -614,7 +611,6 @@ export default function ChatView() {
     return () => window.removeEventListener('chat:open-create-channel', onOpenCreate);
   }, []);
 
-  const headerPad = view === 'compact' ? 'py-3' : 'py-4';
   const currentChannel = useMemo(() => channels.find(c => c.id === channelId), [channels, channelId]);
   const isDM = channelId.startsWith("dm:");
   const dmUser = isDM ? users[channelId.slice(3)] : undefined;
@@ -627,12 +623,12 @@ export default function ChatView() {
   const memberCount = memberIds.length;
   const topic = channelTopics[channelId]?.topic || "";
   const dmOptions = useMemo(() => Object.values(users).filter(u => u.id !== me.id), [users, me.id]);
+  const channelDisplayName = isDM ? channelLabel : channelLabel.replace(/^#\s*/, "#");
+  const headerPad = view === 'compact' ? 'py-3' : 'py-4';
   const headerButtonClass =
     "inline-flex items-center gap-1 rounded-md border border-border/60 bg-subtle/30 px-2 py-1 text-xs font-medium transition-colors duration-150 ease-out hover:border-border hover:bg-subtle/50";
   const ghostActionClass =
     "inline-flex items-center gap-1 text-xs font-medium text-muted transition-colors duration-150 ease-out hover:text-text";
-  const channelDisplayName = isDM ? channelLabel : channelLabel.replace(/^#\s*/, "#");
-
   const quoteInline = (m: Msg) => {
     const ev = new CustomEvent('chat:insert-quote', { detail: { text: `${m.author} — ${new Date(m.ts).toLocaleString()}\n${m.text || ""}` } });
     window.dispatchEvent(ev);

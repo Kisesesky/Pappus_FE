@@ -40,19 +40,19 @@ export default function LiveReadersBar({ meId, meName, channelId }: { meId: stri
   if (list.length === 0) return null;
 
   return (
-    <div className="px-4 py-1 border-b border-border bg-subtle/20 text-xs flex items-center gap-2">
-      <span className="opacity-70">Also reading:</span>
-      <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-panel/70 px-3 py-2 text-[11px] text-muted shadow-sm">
+      <span className="font-medium text-foreground/80">실시간 읽는 사람</span>
+      <div className="flex items-center gap-2 text-foreground/80">
         {list.map(p => (
-          <span key={p.id} className="inline-flex items-center gap-1">
-            <span className="w-5 h-5 rounded-full bg-subtle/70 border border-border grid place-items-center text-[10px]">
+          <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full bg-background/80 px-2 py-0.5 shadow-sm">
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-subtle/60 text-[10px] font-semibold text-muted">
               {p.name[0]}
             </span>
-            <span className="opacity-80">{p.name}</span>
+            <span className="text-xs">{p.name}</span>
           </span>
         ))}
       </div>
-      <span className="ml-auto opacity-60">#{channelId}</span>
+      <span className="ml-auto text-muted/70">#{channelId}</span>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// components/views/settings/DashboardSettingsModal.tsx
+﻿// components/views/settings/DashboardSettingsModal.tsx
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -21,13 +21,72 @@ const bgThumbs = [
   '/bg/purple.jpg', '/bg/pool.jpg', '/bg/desert.jpg', '/bg/cloud.jpg', '/bg/car.jpg'
 ];
 
-const defaultWidgets = [
-  { id: 'tasksCreatedByMe', label: '내가 요청한 업무', visible: false },
-  { id: 'projects', label: '내 프로젝트', visible: true },
-  { id: 'tasksAssignedToMe', label: '내가 담당중인 업무', visible: true },
-  { id: 'chats', label: '채팅방', visible: true },
-  { id: 'calendar', label: '일정', visible: true },
+type WidgetState = { id: string; label: string; description: string; visible: boolean };
+
+const WIDGET_OPTIONS: WidgetState[] = [
+  {
+    id: 'projects',
+    label: '프로젝트 현황',
+    description: '주요 프로젝트의 진행률과 업데이트를 한눈에 확인합니다.',
+    visible: true,
+  },
+  {
+    id: 'issues',
+    label: '이슈 집중',
+    description: '우선순위 높은 이슈와 진행 상황을 모아 보여줍니다.',
+    visible: true,
+  },
+  {
+    id: 'myTasks',
+    label: '내 작업',
+    description: '나에게 배정된 작업과 마감일을 추적합니다.',
+    visible: true,
+  },
+  {
+    id: 'chatPulse',
+    label: '채널 활동',
+    description: '주요 채널의 최근 대화와 미읽은 메시지를 요약합니다.',
+    visible: true,
+  },
+  {
+    id: 'docs',
+    label: 'Docs 업데이트',
+    description: '문서 작성 현황과 최근 수정 내역을 살펴봅니다.',
+    visible: true,
+  },
+  {
+    id: 'calendar',
+    label: '다가오는 일정',
+    description: '다가오는 미팅과 일정 하이라이트를 보여줍니다.',
+    visible: true,
+  },
 ];
+
+const WIDGET_OPTION_MAP = new Map(WIDGET_OPTIONS.map((item) => [item.id, item]));
+
+const defaultWidgets: WidgetState[] = WIDGET_OPTIONS.map((item) => ({ ...item }));
+
+function sanitizeWidgets(input: unknown): WidgetState[] {
+  if (!Array.isArray(input)) return WIDGET_OPTIONS.map((item) => ({ ...item }));
+  const result: WidgetState[] = [];
+  const seen = new Set<string>();
+  input.forEach((entry) => {
+    if (!entry || typeof entry !== 'object') return;
+    const id = (entry as { id?: string }).id;
+    if (!id || seen.has(id) || !WIDGET_OPTION_MAP.has(id)) return;
+    const base = WIDGET_OPTION_MAP.get(id)!;
+    const visible =
+      typeof (entry as { visible?: boolean }).visible === 'boolean'
+        ? (entry as { visible?: boolean }).visible!
+        : base.visible;
+    result.push({ ...base, visible });
+    seen.add(id);
+  });
+  WIDGET_OPTIONS.forEach((option) => {
+    if (!seen.has(option.id)) result.push({ ...option });
+  });
+  return result;
+}
 
 type Props = { open: boolean; onClose: () => void };
 
@@ -36,7 +95,7 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
   const [bgColor, setBgColor] = useState<string>(colorChips[0]);
   const [bgImage, setBgImage] = useState<string>(bgThumbs[0]);
   const [uploadedBg, setUploadedBg] = useState<string | undefined>();
-  const [widgets, setWidgets] = useState(defaultWidgets);
+  const [widgets, setWidgets] = useState<WidgetState[]>(() => defaultWidgets.map((item) => ({ ...item })));
 
   // 초기 로드 (localStorage)
   useEffect(() => {
@@ -46,7 +105,7 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
     const ws = localStorage.getItem(WIDGETS_KEY);
     if (savedBg) setBgImage(savedBg);
     if (uploaded) setUploadedBg(uploaded);
-    if (ws) setWidgets(JSON.parse(ws));
+    setWidgets(sanitizeWidgets(ws ? JSON.parse(ws) : undefined));
   }, [open]);
 
   const save = () => {
@@ -200,7 +259,7 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
                               <GripVertical size={16} className="text-zinc-400" />
                               <div>
                                 <div className="text-sm font-medium">{w.label}</div>
-                                <div className="text-xs text-zinc-500">대시보드 카드 형태</div>
+                                <div className="text-xs text-zinc-500">{w.description}</div>
                               </div>
                             </div>
                             <button onClick={() => toggleWidget(w.id)} className="p-1">
