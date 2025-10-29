@@ -18,6 +18,7 @@ import {
   PlusCircle,
   PanelsTopLeft,
   FileText,
+  Table,
 } from "lucide-react";
 import clsx from "clsx";
 import { useChat } from "@/store/chat";
@@ -469,6 +470,12 @@ export default function Sidebar() {
               label="Issues"
               icon={FolderKanban}
               active={pathname?.startsWith("/app/issues")}
+            />
+            <NavItem
+              href="/app/worksheet"
+              label="Worksheet"
+              icon={Table}
+              active={pathname?.startsWith("/app/worksheet")}
             />
             <ExpandableNav
               icon={MessageSquare}
