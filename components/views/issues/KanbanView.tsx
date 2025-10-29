@@ -281,7 +281,8 @@ function Column({ colKey, label, items, visibleItems, hasActiveFilters, renderCa
     <div
       ref={setNodeRef}
       className={clsx(
-        'flex min-w-[320px] flex-col gap-3 rounded-2xl border border-border bg-subtle/40 p-4 transition',
+        'flex w-full min-w-0 flex-col gap-3 rounded-2xl border border-border bg-subtle/40 p-4 transition',
+        'md:flex-1 md:min-w-[280px]',
         isOver && 'ring-2 ring-brand/50',
       )}
     >
@@ -791,7 +792,7 @@ export default function KanbanView() {
         </div>
 
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <div className="flex min-w-[960px] gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start">
             <Column
               colKey="todo"
               label="To Do"

@@ -55,7 +55,7 @@ export default function RightPanel({
   }, [activity, actFilter]);
 
   return (
-    <aside className="h-full">
+    <aside className="h-full w-full">
       <div className="h-14 px-4 border-b border-border flex items-center justify-between">
         <div className="font-semibold truncate">{title}</div>
         <div className="flex items-center gap-2">

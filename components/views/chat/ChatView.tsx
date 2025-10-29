@@ -373,7 +373,7 @@ export default function ChatView() {
       {/* 메시지 리스트 */}
       <div
         ref={listRef}
-        className={`scroll-smooth overflow-y-auto p-4 space-y-3 md:space-y-4 scrollbar-thin ${view === 'compact' ? 'text-[13px]' : 'text-[14px]'}`}
+        className={`scroll-smooth overflow-y-auto p-3 sm:p-4 space-y-3 md:space-y-4 scrollbar-thin ${view === 'compact' ? 'text-[13px]' : 'text-[14px]'}`}
         onClick={(e)=> {
           if ((e.target as HTMLElement).closest('[data-mid]')) return;
           if (selectMode) clearSelection();

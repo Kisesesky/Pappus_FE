@@ -8,9 +8,10 @@ type AppShellProps = {
   sidebar?: React.ReactNode;
   header?: React.ReactNode;
   children: React.ReactNode;
-  rightPanel?: React.ReactNode | null; // 우측 슬롯 (없으면 컬럼 제거)
+  rightPanel?: React.ReactNode | null; // ?????? ??? (????? ?? ???)
   rightWidth?: number; // px
   className?: string;
+  mainScrollable?: boolean;
 };
 
 export default function AppShell({
@@ -20,36 +21,51 @@ export default function AppShell({
   rightPanel = null,
   rightWidth = 360,
   className,
+  mainScrollable = true,
 }: AppShellProps) {
   const hasRight = !!rightPanel;
+  const contentMinHeight = header ? 'calc(100vh - 56px)' : '100vh';
 
   return (
-    <div className={clsx('h-screen w-full bg-background text-foreground', className)}>
-      {/* 상단 헤더 */}
+    <div className={clsx('min-h-screen w-full bg-background text-foreground flex flex-col', className)}>
+      {/* ??? ??? */}
       {header && (
         <div className="h-14 shrink-0 border-b border-border bg-panel shadow-panel sticky top-0 z-40">
           {header}
         </div>
       )}
 
-      <div className="h-[calc(100vh-56px)] flex">
-        {/* 좌측 사이드바 */}
+      <div
+        className="flex-1 flex flex-col md:flex-row"
+        style={{ minHeight: contentMinHeight }}
+      >
+        {/* ???? ????? */}
         {sidebar && (
-          <aside className="w-72 border-r border-border bg-panel shadow-panel shrink-0 overflow-auto">
+          <aside className="hidden md:flex md:w-72 md:flex-col border-r border-border bg-panel shadow-panel shrink-0 overflow-auto">
             {sidebar}
           </aside>
         )}
 
-        {/* 메인 + (옵션)우측패널 */}
+        {/* ???? + (?��)?????? */}
         <div
-          className="flex-1 min-w-0 grid"
-          style={{ gridTemplateColumns: hasRight ? `1fr ${rightWidth}px` : '1fr' }}
+          className={clsx(
+            'flex-1 min-w-0 flex flex-col',
+            hasRight && 'md:grid'
+          )}
+          style={hasRight ? { gridTemplateColumns: `minmax(0, 1fr) ${rightWidth}px` } : undefined}
         >
-          <main className="min-w-0 overflow-auto">{children}</main>
+          <main
+            className={clsx(
+              'min-w-0 flex-1 min-h-0',
+              mainScrollable ? 'overflow-auto' : 'overflow-hidden'
+            )}
+          >
+            {children}
+          </main>
 
           {hasRight && (
             <aside
-              className="h-full overflow-auto border-l border-border bg-panel shadow-panel"
+              className="hidden md:block h-full overflow-auto border-l border-border bg-panel shadow-panel"
               style={{ width: rightWidth }}
             >
               {rightPanel}

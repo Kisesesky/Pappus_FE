@@ -1,30 +1,104 @@
 'use client';
 
 import Link from "next/link";
-import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState } from "react";
 import type { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   MessageSquare,
   FolderKanban,
   BookText,
   CalendarDays,
   ChevronDown,
-  ChevronRight,
+  ChevronUp,
+  ChevronLeft,
   Hash,
   Star,
   VolumeX,
   PlusCircle,
   PanelsTopLeft,
+  FileText,
 } from "lucide-react";
 import clsx from "clsx";
 import { useChat } from "@/store/chat";
 
-const NavItem = ({ href, label, icon: Icon }: any) => (
-  <Link href={href} className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-subtle/60 text-sm">
+type NavItemProps = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number }>;
+  active?: boolean;
+};
+
+const NavItem = ({ href, label, icon: Icon, active = false }: NavItemProps) => (
+  <Link
+    href={href}
+    className={clsx(
+      "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
+      active ? "bg-subtle/70 text-foreground shadow-inner border border-border" : "hover:bg-subtle/60"
+    )}
+  >
     <Icon size={16} />
     <span>{label}</span>
   </Link>
 );
+
+const DOC_PAGE_MENU = [
+  { id: "spec", title: "제품 스펙", description: "MVP 요구사항과 범위" },
+  { id: "roadmap", title: "제품 로드맵", description: "분기별 마일스톤" },
+  { id: "retro", title: "프로젝트 회고", description: "잘된 점과 개선점" },
+];
+
+type ExpandableNavProps = {
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  onNavigate?: () => void;
+  active?: boolean;
+  children?: React.ReactNode;
+};
+
+function ExpandableNav({
+  icon: Icon,
+  label,
+  open,
+  onToggle,
+  onNavigate,
+  active = false,
+  children,
+}: ExpandableNavProps) {
+  const handleClick = () => {
+    onNavigate?.();
+    onToggle();
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={handleClick}
+        className={clsx(
+          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition border",
+          open || active ? "border-border bg-subtle/70 text-foreground shadow-inner" : "border-transparent hover:bg-subtle/60"
+        )}
+      >
+        <span className="flex items-center gap-2">
+          <Icon size={16} />
+          <span>{label}</span>
+        </span>
+        <ChevronUp
+          size={14}
+          className={clsx("transition-transform", open ? "rotate-180" : "-rotate-90")}
+        />
+      </button>
+      {open && (
+        <div className="mt-2 space-y-3">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type SectionHeaderProps = {
   title: string;
@@ -42,7 +116,7 @@ function SectionHeader({ title, collapsed, onToggle, action }: SectionHeaderProp
         onClick={onToggle}
         aria-label={`${collapsed ? "Expand" : "Collapse"} ${title}`}
       >
-        {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+        {collapsed ? <ChevronLeft size={14} /> : <ChevronDown size={14} />}
         <span>{title}</span>
       </button>
       {action}
@@ -65,6 +139,8 @@ type ChannelRowProps = {
   onSelect: (id: string) => void;
   onToggleStar: (id: string) => void;
 };
+
+type ChatGroupKey = "starred" | "channels" | "dms";
 
 function ChannelRow({
   id,
@@ -153,6 +229,7 @@ function ChannelRow({
 export default function Sidebar() {
   const {
     channels,
+    allChannels,
     setChannel,
     channelId,
     loadChannels,
@@ -166,6 +243,16 @@ export default function Sidebar() {
     toggleStar,
     channelActivity,
   } = useChat();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [chatExpanded, setChatExpanded] = useState(true);
+  const [docsExpanded, setDocsExpanded] = useState(true);
+  const [activeDocId, setActiveDocId] = useState<string>("spec");
+  const [fallbackCollapsed, setFallbackCollapsed] = useState<Record<ChatGroupKey, boolean>>({
+    starred: false,
+    channels: false,
+    dms: false,
+  });
 
   useEffect(() => {
     if (workspaces.length === 0) {
@@ -173,20 +260,76 @@ export default function Sidebar() {
     }
   }, [workspaces.length, loadChannels]);
 
+  useEffect(() => {
+    if (pathname?.startsWith("/app/chat")) setChatExpanded(true);
+    if (pathname?.startsWith("/app/docs")) setDocsExpanded(true);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("fd.docs.active");
+    if (saved) setActiveDocId(saved);
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<{ id?: string }>).detail;
+      if (detail?.id) {
+        setActiveDocId(detail.id);
+      }
+    };
+    window.addEventListener("docs:active-page", handler as EventListener);
+    return () => window.removeEventListener("docs:active-page", handler as EventListener);
+  }, []);
+
   const workspace = useMemo(() => {
     return workspaces.find(ws => ws.id === workspaceId) || workspaces[0];
   }, [workspaces, workspaceId]);
 
+  const workspaceChannels = useMemo(() => {
+    if (channels.length > 0) return channels;
+    const targetWorkspaceId = workspace?.id ?? workspaceId;
+    return allChannels.filter(c => c.workspaceId === targetWorkspaceId);
+  }, [channels, allChannels, workspace?.id, workspaceId]);
+
   const channelMap = useMemo(() => {
-    const map = new Map<string, typeof channels[number]>();
-    channels.forEach(c => map.set(c.id, c));
+    const map = new Map<string, typeof workspaceChannels[number]>();
+    workspaceChannels.forEach(c => map.set(c.id, c));
     return map;
-  }, [channels]);
+  }, [workspaceChannels]);
 
   const starredSet = useMemo(() => {
     const starredSection = workspace?.sections?.find(sec => sec.type === "starred");
     return new Set(starredSection?.itemIds ?? []);
   }, [workspace]);
+
+  const sectionMeta = useMemo(() => {
+    const meta = new Map<ChatGroupKey, { id?: string; collapsed?: boolean; ids?: string[] }>();
+    workspace?.sections?.forEach((sec) => {
+      if (sec.type === "starred" || sec.type === "channels" || sec.type === "dms") {
+        meta.set(sec.type as ChatGroupKey, {
+          id: sec.id,
+          collapsed: !!sec.collapsed,
+          ids: sec.itemIds ?? [],
+        });
+      }
+    });
+    return meta;
+  }, [workspace?.sections]);
+
+  const defaultGroupIds = useMemo<Record<ChatGroupKey, string[]>>(() => {
+    const starred = workspaceChannels
+      .filter((ch) => starredSet.has(ch.id))
+      .map((ch) => ch.id);
+    const regular = workspaceChannels
+      .filter((ch) => !ch.isDM && !starredSet.has(ch.id))
+      .map((ch) => ch.id);
+    const dms = workspaceChannels
+      .filter((ch) => ch.isDM)
+      .map((ch) => ch.id);
+    return {
+      starred,
+      channels: regular,
+      dms,
+    };
+  }, [workspaceChannels, starredSet]);
 
   const renderItemLabel = useCallback((id: string) => {
     const channel = channelMap.get(id);
@@ -201,22 +344,90 @@ export default function Sidebar() {
 
   const handleSelectChannel = useCallback((id: string) => {
     void setChannel(id);
-  }, [setChannel]);
-
-  const handleToggleSection = useCallback((sectionId: string) => {
-    toggleSectionCollapsed(sectionId);
-  }, [toggleSectionCollapsed]);
+    if (!pathname?.startsWith("/app/chat")) {
+      router.push("/app/chat");
+    }
+    setChatExpanded(true);
+  }, [setChannel, pathname, router]);
 
   const handleToggleStar = useCallback((id: string) => {
     toggleStar(id);
   }, [toggleStar]);
 
+  const handleToggleGroup = useCallback((key: ChatGroupKey) => {
+    const meta = sectionMeta.get(key);
+    if (meta?.id) {
+      toggleSectionCollapsed(meta.id);
+    } else {
+      setFallbackCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+    }
+  }, [sectionMeta, toggleSectionCollapsed]);
+
   const handleOpenCreateChannel = useCallback(() => {
-    window.dispatchEvent(new Event("chat:open-create-channel"));
+    setChatExpanded(true);
+    if (!pathname?.startsWith("/app/chat")) {
+      router.push("/app/chat");
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("chat:open-create-channel"));
+    }
+  }, [pathname, router]);
+
+  const toggleChatSection = useCallback(() => {
+    setChatExpanded(prev => !prev);
   }, []);
 
+  const toggleDocsSection = useCallback(() => {
+    setDocsExpanded(prev => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (!chatExpanded) return;
+
+    sectionMeta.forEach((meta) => {
+      if (meta?.id && meta.collapsed) {
+        toggleSectionCollapsed(meta.id, false);
+      }
+    });
+
+    setFallbackCollapsed((prev) => {
+      let changed = false;
+      const next = { ...prev } as Record<ChatGroupKey, boolean>;
+      ( ["starred", "channels", "dms"] as ChatGroupKey[] ).forEach((key) => {
+        if (!sectionMeta.has(key) && prev[key] === undefined) {
+          next[key] = false;
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [chatExpanded, sectionMeta, toggleSectionCollapsed]);
+
+  const handleNavigateDocs = useCallback(() => {
+    if (!pathname?.startsWith("/app/docs")) {
+      router.push("/app/docs");
+    }
+  }, [pathname, router]);
+
+  const handleSelectDoc = useCallback((id: string) => {
+    setDocsExpanded(true);
+    setActiveDocId(id);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("fd.docs.active", id);
+      const emit = () => window.dispatchEvent(new CustomEvent("docs:change-page", { detail: { id } }));
+      if (pathname?.startsWith("/app/docs")) {
+        emit();
+      } else {
+        window.setTimeout(emit, 80);
+      }
+    }
+    if (!pathname?.startsWith("/app/docs")) {
+      router.push("/app/docs");
+    }
+  }, [pathname, router]);
+
   return (
-    <aside className="h-full flex flex-col">
+    <aside className="h-full w-full flex flex-col">
       <div className="px-3 py-3 border-b border-border">
         <div className="text-xs uppercase text-muted tracking-wider">Workspace</div>
         <div className="mt-1 flex items-center justify-between gap-2">
@@ -239,79 +450,156 @@ export default function Sidebar() {
 
       <div className="p-3 flex-1 overflow-y-auto space-y-4 scrollbar-thin">
         <div>
-          <div className="text-xs text-muted mb-2">Projects</div>
-          <div className="space-y-1">
-            <NavItem href="/app/dashboard" label="Dashboard" icon={PanelsTopLeft} />
-            <NavItem href="/app/calendar" label="Calendar" icon={CalendarDays} />
-            <NavItem href="/app/issues" label="Issues" icon={FolderKanban} />
-            <NavItem href="/app/chat" label="Chat" icon={MessageSquare} />
-            <NavItem href="/app/docs" label="Docs" icon={BookText} />
+          <div className="mb-2 text-xs text-muted">Projects</div>
+          <div className="space-y-2">
+            <NavItem
+              href="/app/dashboard"
+              label="Dashboard"
+              icon={PanelsTopLeft}
+              active={pathname?.startsWith("/app/dashboard")}
+            />
+            <NavItem
+              href="/app/calendar"
+              label="Calendar"
+              icon={CalendarDays}
+              active={pathname?.startsWith("/app/calendar")}
+            />
+            <NavItem
+              href="/app/issues"
+              label="Issues"
+              icon={FolderKanban}
+              active={pathname?.startsWith("/app/issues")}
+            />
+            <ExpandableNav
+              icon={MessageSquare}
+              label="Chat"
+              open={chatExpanded}
+              onToggle={toggleChatSection}
+              active={pathname?.startsWith("/app/chat")}
+            >
+              <div className="space-y-4 pl-1">
+                {(["starred", "channels", "dms"] as ChatGroupKey[]).map((key, index) => {
+                  const meta = sectionMeta.get(key);
+                  const idsFromSection = meta?.ids ?? [];
+                  const ids = (idsFromSection.length ? idsFromSection : defaultGroupIds[key]) ?? [];
+                  if (key === "starred" && ids.length === 0) return null;
+
+                  const collapsed = meta?.id ? !!meta.collapsed : !!fallbackCollapsed[key];
+                  const titleMap: Record<ChatGroupKey, string> = {
+                    starred: "Starred",
+                    channels: "Channels",
+                    dms: "Direct Messages",
+                  };
+                  const action = key === "channels"
+                    ? (
+                      <button
+                        type="button"
+                        onClick={handleOpenCreateChannel}
+                        className="rounded p-1 text-muted opacity-70 hover:bg-subtle/60 hover:text-foreground"
+                        aria-label="Create channel"
+                      >
+                        <PlusCircle size={14} />
+                      </button>
+                    )
+                    : undefined;
+
+                  const items = ids
+                    .map((id) => {
+                      const label = renderItemLabel(id);
+                      if (!label) return null;
+                      const channel = channelMap.get(id);
+                      const isDM = channel?.isDM ?? id.startsWith("dm:");
+                      const activity = channelActivity[id];
+                      return {
+                        id,
+                        label,
+                        isDM,
+                        isActive: channelId === id,
+                        isMuted: !!channelTopics[id]?.muted,
+                        unread: activity?.unreadCount ?? 0,
+                        mentions: activity?.mentionCount ?? 0,
+                        preview: activity?.lastPreview,
+                        lastAuthor: activity?.lastAuthor,
+                        isStarred: starredSet.has(id),
+                        isTyping: (typingUsers[id] || []).length > 0,
+                      } as ChannelRowProps;
+                    })
+                    .filter(Boolean) as ChannelRowProps[];
+
+                  return (
+                    <div
+                      key={`chat-group-${key}`}
+                      className={clsx(
+                        "space-y-2",
+                        index > 0 && "border-t border-border/60 pt-3"
+                      )}
+                    >
+                      <div className="px-1">
+                        <SectionHeader
+                          title={titleMap[key]}
+                          collapsed={collapsed}
+                          onToggle={() => handleToggleGroup(key)}
+                          action={action}
+                        />
+                      </div>
+                      {!collapsed && (
+                        <div className="mt-2 space-y-1">
+                          {items.length === 0 ? (
+                            <div className="px-3 py-2 text-xs text-muted opacity-70">
+                              {key === "dms" ? "No direct messages yet." : "No items yet."}
+                            </div>
+                          ) : (
+                            items.map((item) => (
+                              <ChannelRow
+                                key={item.id}
+                                {...item}
+                                onSelect={handleSelectChannel}
+                                onToggleStar={handleToggleStar}
+                              />
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </ExpandableNav>
+            <ExpandableNav
+              icon={BookText}
+              label="Docs"
+              open={docsExpanded}
+              onToggle={toggleDocsSection}
+              onNavigate={handleNavigateDocs}
+              active={pathname?.startsWith("/app/docs")}
+            >
+              <div className="space-y-1 pl-1">
+                {DOC_PAGE_MENU.map((doc) => {
+                  const isActive = activeDocId === doc.id;
+                  return (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      onClick={() => handleSelectDoc(doc.id)}
+                      className={clsx(
+                        "w-full rounded-md border px-3 py-2 text-left text-sm transition",
+                        isActive
+                          ? "border-border bg-subtle/70 text-foreground shadow-inner"
+                          : "border-transparent text-muted hover:bg-subtle/60"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileText size={14} className="text-muted" />
+                        <span className="truncate">{doc.title}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-muted opacity-80">{doc.description}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </ExpandableNav>
           </div>
         </div>
-
-        {(workspace?.sections ?? []).map((section, index) => {
-          const isCollapsed = !!section.collapsed;
-          const sectionAction = section.type === "channels"
-            ? (
-              <button
-                type="button"
-                onClick={handleOpenCreateChannel}
-                className="rounded p-1 text-muted opacity-70 hover:bg-subtle/60 hover:text-foreground"
-                aria-label="Create channel"
-              >
-                <PlusCircle size={14} />
-              </button>
-            )
-            : undefined;
-
-          const items = section.itemIds
-            .map((id) => {
-              const label = renderItemLabel(id);
-              if (!label) return null;
-              const channel = channelMap.get(id);
-              const activity = channelActivity[id];
-              return {
-                id,
-                label,
-                isDM: channel?.isDM || id.startsWith("dm:"),
-                isActive: channelId === id,
-                isMuted: !!channelTopics[id]?.muted,
-                unread: activity?.unreadCount ?? 0,
-                mentions: activity?.mentionCount ?? 0,
-                preview: activity?.lastPreview,
-                lastAuthor: activity?.lastAuthor,
-                isStarred: starredSet.has(id),
-                isTyping: (typingUsers[id] || []).length > 0,
-              } as ChannelRowProps;
-            })
-            .filter(Boolean) as ChannelRowProps[];
-
-          return (
-            <div key={section.id} className={index === 0 ? "" : "border-t border-border pt-3"}>
-              <SectionHeader
-                title={section.title}
-                collapsed={isCollapsed}
-                onToggle={() => handleToggleSection(section.id)}
-                action={sectionAction}
-              />
-              {!isCollapsed && (
-                <div className="mt-2 space-y-1">
-                  {items.length === 0 && (
-                    <div className="px-3 py-2 text-xs text-muted opacity-70">No items yet.</div>
-                  )}
-                  {items.map((item) => (
-                    <ChannelRow
-                      key={item.id}
-                      {...item}
-                      onSelect={handleSelectChannel}
-                      onToggleStar={handleToggleStar}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
       </div>
 
       <div className="p-3 border-t border-border text-xs text-muted">

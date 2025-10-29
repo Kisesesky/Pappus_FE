@@ -254,6 +254,15 @@ function ensureSeed() {
 }
 ensureSeed();
 
+const INITIAL_WORKSPACES = lsGet<Workspace[]>(WORKSPACES_KEY, []);
+const INITIAL_ALL_CHANNELS = lsGet<Channel[]>(CHANNELS_KEY, []);
+const INITIAL_FALLBACK_WORKSPACE_ID = INITIAL_WORKSPACES[0]?.id || DEFAULT_WORKSPACE_ID;
+const INITIAL_WORKSPACE_ID = (() => {
+  const active = lsGet<string>(ACTIVE_WORKSPACE_KEY, INITIAL_FALLBACK_WORKSPACE_ID);
+  return INITIAL_WORKSPACES.some(ws => ws.id === active) ? active : INITIAL_FALLBACK_WORKSPACE_ID;
+})();
+const INITIAL_CHANNELS = INITIAL_ALL_CHANNELS.filter(c => c.workspaceId === INITIAL_WORKSPACE_ID);
+
 /** ---------------- Helpers ---------------- */
 async function toAttachment(f: FileItem): Promise<Attachment> {
   const MAX_INLINE = 1024 * 1024; // 1MB
@@ -294,12 +303,12 @@ export const useChat = create<State>((set, get) => ({
   },
   userStatus: lsGet<Record<string, PresenceState>>(STATUS_KEY, {}),
 
-  workspaceId: lsGet<string>(ACTIVE_WORKSPACE_KEY, DEFAULT_WORKSPACE_ID),
-  workspaces: lsGet<Workspace[]>(WORKSPACES_KEY, []),
-  allChannels: lsGet<Channel[]>(CHANNELS_KEY, []),
+  workspaceId: INITIAL_WORKSPACE_ID,
+  workspaces: INITIAL_WORKSPACES,
+  allChannels: INITIAL_ALL_CHANNELS,
 
-  channelId: "general",
-  channels: [],
+  channelId: INITIAL_CHANNELS[0]?.id ?? "general",
+  channels: INITIAL_CHANNELS,
   channelMembers: lsGet<Record<string,string[]>>(MEMBERS_KEY, {}),
 
   channelTopics: lsGet<Record<string,{topic:string; muted?:boolean}>>(TOPICS_KEY, {}),
@@ -1038,3 +1047,4 @@ export const useChat = create<State>((set, get) => ({
     }
   },
 }));
+

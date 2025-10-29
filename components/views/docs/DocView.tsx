@@ -397,6 +397,12 @@ function fileToDataUrl(file: File, onProgress?: (p:number)=>void): Promise<strin
 /* ────────────────────────────────────────────────────────────────────── */
 export default function DocView() {
   const [pageId, setPageId] = useState<string>("spec");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("fd.docs.active");
+    if (saved) setPageId(saved);
+  }, []);
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashPos, setSlashPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [histOpen, setHistOpen] = useState(false);
@@ -444,6 +450,11 @@ export default function DocView() {
     };
     const fallback = pageId ? pageId.charAt(0).toUpperCase() + pageId.slice(1) : "문서";
     return preset[pageId] ?? fallback;
+  }, [pageId]);
+useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("fd.docs.active", pageId);
+    window.dispatchEvent(new CustomEvent("docs:active-page", { detail: { id: pageId } }));
   }, [pageId]);
 
   const editor = useEditor(
@@ -898,7 +909,7 @@ export default function DocView() {
   return (
     <DocEditorProvider editor={editor}>
       <div className="h-full flex flex-col">
-        <div className="h-14 px-4 border-b border-border flex items-center justify-between bg-panel/70 backdrop-blur-sm">
+      <div className="h-14 px-3 sm:px-4 border-b border-border flex items-center justify-between bg-panel/70 backdrop-blur-sm">
           <div className="flex items-center gap-4">
             <div>
               <div className="text-xs uppercase tracking-[0.08em] text-muted">문서</div>
@@ -1055,7 +1066,7 @@ export default function DocView() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           <EditorContent editor={editor} />
         </div>
 
@@ -1203,4 +1214,5 @@ export default function DocView() {
     </DocEditorProvider>
   );
 }
+
 

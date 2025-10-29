@@ -8,9 +8,12 @@ import { ToastProvider } from '@/components/ui/Toast';
 import Drawer from '@/components/ui/Drawer';
 import ChatRightPanel from '@/components/chat/ChatRightPanel';
 import ProfilePopover from '@/components/chat/ProfilePopover';
+import { usePathname } from 'next/navigation';
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const onOpen = () => setOpen(true);
@@ -34,6 +37,24 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  useEffect(() => {
+    const handleOpen = () => setSidebarOpen(true);
+    const handleClose = () => setSidebarOpen(false);
+    const handleToggle = () => setSidebarOpen(prev => !prev);
+    window.addEventListener('app:open-sidebar', handleOpen);
+    window.addEventListener('app:close-sidebar', handleClose);
+    window.addEventListener('app:toggle-sidebar', handleToggle);
+    return () => {
+      window.removeEventListener('app:open-sidebar', handleOpen);
+      window.removeEventListener('app:close-sidebar', handleClose);
+      window.removeEventListener('app:toggle-sidebar', handleToggle);
+    };
+  }, []);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
   return (
     <ToastProvider>
       <AppShell
@@ -41,16 +62,19 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         sidebar={<Sidebar />}
         rightPanel={<div className="hidden md:block"><ChatRightPanel /></div>}
         rightWidth={380}
+        mainScrollable={false}
       >
         {children}
       </AppShell>
 
-      {/* 모바일 Drawer */}
+      <Drawer open={sidebarOpen} onOpenChange={setSidebarOpen} title="Navigation" width={320} side="left">
+        <Sidebar />
+      </Drawer>
+
       <Drawer open={open} onOpenChange={setOpen} title="Threads / AI">
         <ChatRightPanel />
       </Drawer>
 
-      {/* 모바일 토글 버튼 */}
       <button
         className="md:hidden fixed bottom-4 right-4 z-40 rounded-full border border-border bg-panel shadow-panel px-4 py-2 text-sm"
         onClick={() => setOpen(true)}
@@ -59,7 +83,6 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         Threads
       </button>
 
-      {/* 멘션 프로필 팝오버 */}
       <ProfilePopover />
     </ToastProvider>
   );
