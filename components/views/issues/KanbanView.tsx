@@ -160,7 +160,7 @@ function Label({ text, variant = 'default' }: { text: string; variant?: 'default
         'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]',
         variant === 'alert'
           ? 'border-rose-500/50 bg-rose-500/10 text-rose-500'
-          : 'border-border bg-subtle/40 text-muted',
+          : 'border-border bg-accent/40 text-muted',
       )}
     >
       {variant === 'alert' && <AlertTriangle size={12} />}
@@ -222,7 +222,7 @@ function Card(props: CardT & { onOpen: (id: string) => void }) {
 
       <div className="mt-3 flex items-center justify-between text-xs text-muted">
         <div className="flex items-center gap-2">
-          <div className="grid h-7 w-7 place-items-center rounded-full bg-subtle/60 border border-border text-[11px] font-medium text-foreground/80">
+          <div className="grid h-7 w-7 place-items-center rounded-full bg-accent/60 border border-border text-[11px] font-medium text-foreground/80">
             {initials(assignee)}
           </div>
           <span className="truncate max-w-[110px]">
@@ -239,7 +239,7 @@ function Card(props: CardT & { onOpen: (id: string) => void }) {
 
       {hasChecklist && (
         <div className="mt-3 space-y-1">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-subtle/50">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-accent/50">
             <div
               className={clsx(
                 'h-full rounded-full transition-all',
@@ -281,7 +281,7 @@ function Column({ colKey, label, items, visibleItems, hasActiveFilters, renderCa
     <div
       ref={setNodeRef}
       className={clsx(
-        'flex w-full min-w-0 flex-col gap-3 rounded-2xl border border-border bg-subtle/40 p-4 transition',
+        'flex w-full min-w-0 flex-col gap-3 rounded-2xl border border-border bg-accent/40 p-4 transition',
         'md:flex-1 md:min-w-[280px]',
         isOver && 'ring-2 ring-brand/50',
       )}
@@ -295,7 +295,7 @@ function Column({ colKey, label, items, visibleItems, hasActiveFilters, renderCa
         </div>
         <div
           className={clsx(
-            'h-2 w-12 overflow-hidden rounded-full bg-subtle/60',
+            'h-2 w-12 overflow-hidden rounded-full bg-accent/60',
             colKey === 'done' && 'bg-emerald-500/20',
           )}
         >
@@ -314,7 +314,7 @@ function Column({ colKey, label, items, visibleItems, hasActiveFilters, renderCa
       <SortableContext items={visibleItems.map((card) => card.id)} strategy={verticalListSortingStrategy}>
         <div className="flex flex-col gap-3">
           {visibleItems.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/70 bg-subtle/30 p-4 text-center text-xs text-muted">
+            <div className="rounded-xl border border-dashed border-border/70 bg-accent/30 p-4 text-center text-xs text-muted">
               {emptyMessage}
             </div>
           ) : (
@@ -601,7 +601,7 @@ export default function KanbanView() {
         <div className="flex flex-col gap-4 rounded-3xl border border-border bg-panel/60 p-4 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-subtle/60 px-3 py-1 text-xs text-muted">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border bg-accent/60 px-3 py-1 text-xs text-muted">
                 <Filter size={12} />
                 Flowdash Sprint Board
               </div>
@@ -618,7 +618,7 @@ export default function KanbanView() {
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2 rounded-full border border-border bg-subtle/50 px-3 py-1 text-xs text-muted">
+              <div className="flex items-center gap-2 rounded-full border border-border bg-accent/50 px-3 py-1 text-xs text-muted">
                 <span>스프린트 일수</span>
                 <input
                   type="number"
@@ -636,7 +636,7 @@ export default function KanbanView() {
                 className={clsx(
                   'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition',
                   hist.canUndo
-                    ? 'border-border hover:bg-subtle/60'
+                    ? 'border-border hover:bg-accent/60'
                     : 'cursor-not-allowed border-border/60 text-muted opacity-60',
                 )}
                 onClick={() => hist.undo()}
@@ -650,7 +650,7 @@ export default function KanbanView() {
                 className={clsx(
                   'inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs transition',
                   hist.canRedo
-                    ? 'border-border hover:bg-subtle/60'
+                    ? 'border-border hover:bg-accent/60'
                     : 'cursor-not-allowed border-border/60 text-muted opacity-60',
                 )}
                 onClick={() => hist.redo()}
@@ -709,7 +709,7 @@ export default function KanbanView() {
                     'inline-flex items-center gap-1 rounded-full border px-3 py-1 transition',
                     showOnlyOverdue
                       ? 'border-rose-500/50 bg-rose-500/10 text-rose-600'
-                      : 'border-border hover:bg-subtle/60',
+                      : 'border-border hover:bg-accent/60',
                   )}
                 >
                   <AlertTriangle size={12} />
@@ -722,7 +722,7 @@ export default function KanbanView() {
                     'inline-flex items-center gap-1 rounded-full border px-3 py-1 transition',
                     showChecklistOnly
                       ? 'border-brand/50 bg-brand/10 text-brand'
-                      : 'border-border hover:bg-subtle/60',
+                      : 'border-border hover:bg-accent/60',
                   )}
                 >
                   <ListChecks size={12} />
@@ -754,7 +754,7 @@ export default function KanbanView() {
                         'rounded-full border px-3 py-1 transition',
                         labelFilter === label
                           ? 'border-brand/60 bg-brand/10 text-brand'
-                          : 'border-border hover:bg-subtle/60 text-muted',
+                          : 'border-border hover:bg-accent/60 text-muted',
                       )}
                     >
                       {label}
@@ -776,10 +776,10 @@ export default function KanbanView() {
                         'inline-flex items-center gap-2 rounded-full border px-3 py-1 transition',
                         assigneeFilter === name
                           ? 'border-brand/60 bg-brand/10 text-brand'
-                          : 'border-border hover:bg-subtle/60 text-muted',
+                          : 'border-border hover:bg-accent/60 text-muted',
                       )}
                     >
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-subtle/70 text-[10px] font-semibold text-muted">
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-accent/70 text-[10px] font-semibold text-muted">
                         {initials(name)}
                       </span>
                       {name}
@@ -821,7 +821,7 @@ export default function KanbanView() {
         </DndContext>
 
         {!hasMatches && (
-          <div className="rounded-2xl border border-dashed border-border/60 bg-subtle/40 px-6 py-8 text-center text-sm text-muted">
+          <div className="rounded-2xl border border-dashed border-border/60 bg-accent/40 px-6 py-8 text-center text-sm text-muted">
             조건에 맞는 이슈가 없습니다. 필터를 조정하거나 새 이슈를 생성해보세요.
           </div>
         )}
@@ -829,3 +829,4 @@ export default function KanbanView() {
     </div>
   );
 }
+

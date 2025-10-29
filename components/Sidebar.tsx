@@ -34,8 +34,10 @@ const NavItem = ({ href, label, icon: Icon, active = false }: NavItemProps) => (
   <Link
     href={href}
     className={clsx(
-      "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
-      active ? "bg-subtle/70 text-foreground shadow-inner border border-border" : "hover:bg-subtle/60"
+      "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+      active
+        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
+        : "text-sidebar-foreground hover:bg-sidebar-accent"
     )}
   >
     <Icon size={16} />
@@ -79,8 +81,10 @@ function ExpandableNav({
         type="button"
         onClick={handleClick}
         className={clsx(
-          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition border",
-          open || active ? "border-border bg-subtle/70 text-foreground shadow-inner" : "border-transparent hover:bg-subtle/60"
+          "flex w-full items-center justify-between rounded-md px-3 py-2 text-sm transition-colors border",
+          open || active
+            ? "border-sidebar-primary/40 bg-sidebar-accent text-sidebar-foreground shadow-sm"
+            : "border-transparent text-sidebar-foreground/80 hover:bg-sidebar-accent"
         )}
       >
         <span className="flex items-center gap-2">
@@ -110,10 +114,10 @@ type SectionHeaderProps = {
 
 function SectionHeader({ title, collapsed, onToggle, action }: SectionHeaderProps) {
   return (
-    <div className="flex items-center justify-between text-xs text-muted uppercase tracking-wide">
+    <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-muted">
       <button
         type="button"
-        className="flex items-center gap-2 hover:text-foreground transition"
+        className="flex items-center gap-2 transition-colors hover:text-sidebar-foreground"
         onClick={onToggle}
         aria-label={`${collapsed ? "Expand" : "Collapse"} ${title}`}
       >
@@ -172,37 +176,39 @@ function ChannelRow({
       type="button"
       onClick={() => onSelect(id)}
       className={clsx(
-        "w-full flex items-center gap-3 rounded-md px-3 py-2.5 transition border focus:outline-none focus:ring-1 focus:ring-brand/60",
-        isActive ? "bg-subtle/80 border-border" : "border-transparent hover:bg-subtle/60",
+        "w-full flex items-center gap-3 rounded-md px-3 py-2 transition focus:outline-none focus:ring-1 focus:ring-sidebar-ring",
+        isActive
+          ? "bg-sidebar-primary/10 border border-sidebar-primary text-sidebar-primary"
+          : "border border-transparent text-sidebar-foreground/90 hover:border-sidebar-border hover:bg-sidebar-accent",
         mentions > 0 && !isActive ? "border-rose-400/40" : null
       )}
     >
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {isDM ? (
-            <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-subtle text-[11px] font-semibold uppercase text-muted">
+            <span className="relative inline-flex h-6 w-6 items-center justify-center rounded-full bg-sidebar-accent text-[11px] font-semibold uppercase text-sidebar-foreground">
               {initials || "DM"}
               <span className={clsx("absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-border", presenceDotClass)} />
             </span>
           ) : (
-            <Hash size={14} className="text-muted opacity-80" />
+            <Hash size={14} className="text-sidebar-foreground/50" />
           )}
-          <span className={clsx("truncate", isActive ? "font-semibold" : "text-sm")}>{label}</span>
-          {isMuted && <VolumeX size={12} className="text-muted opacity-70" />}
+          <span className={clsx("truncate text-sm font-medium", isActive ? "text-sidebar-primary" : "text-sidebar-foreground")}>
+            {label}
+          </span>
+          {isMuted && <VolumeX size={12} className="text-sidebar-foreground/40" />}
           {isTyping && <span className="text-[11px] text-emerald-500">typing…</span>}
         </div>
         {previewText && (
-          <div className="mt-1 truncate text-xs text-muted opacity-80">
-            {previewText}
-          </div>
+          <div className="mt-1 truncate text-xs text-sidebar-foreground/60">{previewText}</div>
         )}
       </div>
       <div className="flex items-center gap-1">
         {badgeText && (
           <span
             className={clsx(
-              "min-w-[24px] rounded-full px-2 py-0.5 text-xs font-semibold text-white text-center",
-              mentions > 0 ? "bg-rose-500" : "bg-brand/80"
+              "min-w-[24px] rounded-full px-2 py-0.5 text-xs font-semibold text-white text-center shadow-sm",
+              mentions > 0 ? "bg-rose-500" : "bg-primary"
             )}
           >
             {badgeText}
@@ -214,13 +220,10 @@ function ChannelRow({
             event.stopPropagation();
             onToggleStar(id);
           }}
-          className="rounded p-1 text-muted opacity-60 hover:bg-subtle/60 hover:text-amber-400"
+          className="rounded p-1 text-muted opacity-60 hover:bg-sidebar-accent hover:text-amber-400"
           aria-label="Toggle favorite"
         >
-          <Star
-            size={14}
-            className={clsx(isStarred ? "text-amber-400 fill-amber-400" : "text-muted opacity-40")}
-          />
+          <Star size={14} className={clsx(isStarred ? "text-amber-400 fill-amber-400" : "text-muted opacity-40")} />
         </button>
       </div>
     </button>
@@ -428,30 +431,47 @@ export default function Sidebar() {
   }, [pathname, router]);
 
   return (
-    <aside className="h-full w-full flex flex-col">
-      <div className="px-3 py-3 border-b border-border">
-        <div className="text-xs uppercase text-muted tracking-wider">Workspace</div>
-        <div className="mt-1 flex items-center justify-between gap-2">
-          <span className="font-semibold truncate">{workspace?.name ?? "Workspace"}</span>
-          {workspaces.length > 1 && (
-            <select
-              value={workspaceId}
-              onChange={(e) => void setWorkspace(e.target.value)}
-              className="ml-auto rounded-md border border-border bg-panel px-2 py-1 text-xs"
-            >
-              {workspaces.map(ws => (
-                <option key={ws.id} value={ws.id}>
-                  {ws.name}
-                </option>
-              ))}
-            </select>
-          )}
+    <aside className="h-full w-full flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <div className="border-b border-sidebar-border px-3 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary/90 text-sidebar-primary-foreground font-semibold">
+            FD
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs uppercase tracking-[0.1em] text-muted">Workspace</div>
+            <div className="mt-1 flex items-center gap-2 text-sm font-semibold text-sidebar-foreground">
+              <span className="truncate">{workspace?.name ?? "Workspace"}</span>
+              {workspaces.length > 1 && (
+                <select
+                  value={workspaceId}
+                  onChange={(e) => void setWorkspace(e.target.value)}
+                  className="ml-auto rounded border border-sidebar-border bg-sidebar-accent px-2 py-1 text-xs text-sidebar-foreground focus:outline-none focus:ring-1 focus:ring-sidebar-ring"
+                >
+                  {workspaces.map(ws => (
+                    <option key={ws.id} value={ws.id}>
+                      {ws.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 flex gap-2">
+          <button
+            type="button"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-1.5 text-xs font-medium text-sidebar-primary hover:border-sidebar-primary hover:bg-sidebar-primary/10"
+            onClick={handleOpenCreateChannel}
+          >
+            <PlusCircle size={14} />
+            New channel
+          </button>
         </div>
       </div>
 
-      <div className="p-3 flex-1 overflow-y-auto space-y-4 scrollbar-thin">
+      <div className="flex-1 space-y-4 overflow-y-auto px-3 py-4 scrollbar-thin">
         <div>
-          <div className="mb-2 text-xs text-muted">Projects</div>
+          <div className="mb-2 text-xs font-medium uppercase tracking-[0.08em] text-muted">Projects</div>
           <div className="space-y-2">
             <NavItem
               href="/app/dashboard"
@@ -502,7 +522,7 @@ export default function Sidebar() {
                       <button
                         type="button"
                         onClick={handleOpenCreateChannel}
-                        className="rounded p-1 text-muted opacity-70 hover:bg-subtle/60 hover:text-foreground"
+                        className="rounded p-1 text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
                         aria-label="Create channel"
                       >
                         <PlusCircle size={14} />

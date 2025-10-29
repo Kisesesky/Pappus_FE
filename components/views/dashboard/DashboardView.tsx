@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, useCallback, JSX } from 'react';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
@@ -24,6 +24,7 @@ import { ko } from 'date-fns/locale';
 import { useChat } from '@/store/chat';
 import type { Channel } from '@/store/chat';
 import { listIssues, type Issue } from '@/lib/api';
+import Button from '@/components/ui/button';
 
 export type DashboardProject = {
   id: string;
@@ -308,7 +309,7 @@ function GlassCard({ children, className }: { children: ReactNode; className?: s
   return (
     <div
       className={clsx(
-        'rounded-2xl border border-white/12 bg-slate-950/55 text-white/90 shadow-[0_18px_48px_rgba(15,23,42,0.38)] backdrop-blur-xl',
+        'rounded-xl border border-border bg-background text-foreground shadow-sm',
         className,
       )}
     >
@@ -347,9 +348,9 @@ function MiniCalendar({ events }: { events: DashboardEvent[] }) {
         key={i}
         className={clsx(
           'flex h-9 w-9 items-center justify-center rounded-lg text-xs transition',
-          'text-white/70',
+          'text-muted',
           !inMonth && 'opacity-35',
-          hasEvent && !today && 'bg-sky-500/20 text-sky-100 border border-sky-400/30',
+          hasEvent && !today && 'bg-primary/10 text-primary border border-border',
           today && 'bg-white text-slate-900 font-semibold shadow-lg',
         )}
       >
@@ -360,7 +361,7 @@ function MiniCalendar({ events }: { events: DashboardEvent[] }) {
 
   return (
     <div>
-      <div className="mb-2 text-sm font-semibold text-white/85">
+      <div className="mb-2 text-sm font-semibold text-foreground/85">
         {year}년 {month + 1}월
       </div>
       <div className="grid grid-cols-7 gap-1">{cells}</div>
@@ -552,7 +553,7 @@ export default function DashboardView({
             ? `${issueStats.urgent}건 긴급 · ${issueStats.inProgress}건 진행 중`
             : `${issueStats.inProgress}건 진행 중`,
         icon: FolderKanban,
-        accent: 'border-rose-500/30 bg-rose-500/10 text-rose-100',
+        iconStyle: 'bg-rose-100 text-rose-700',
       },
       {
         id: 'docs',
@@ -560,7 +561,7 @@ export default function DashboardView({
         value: docStats.pages,
         hint: docHint,
         icon: BookText,
-        accent: 'border-violet-500/35 bg-violet-500/10 text-violet-100',
+        iconStyle: 'bg-primary/10 text-primary',
       },
       {
         id: 'chat',
@@ -568,7 +569,7 @@ export default function DashboardView({
         value: unreadTotal,
         hint: chatHint,
         icon: MessageSquare,
-        accent: 'border-sky-500/35 bg-sky-500/10 text-sky-100',
+        iconStyle: 'bg-blue-100 text-blue-700',
       },
       {
         id: 'calendar',
@@ -576,7 +577,7 @@ export default function DashboardView({
         value: upcomingEvents.length,
         hint: eventHint,
         icon: CalendarDays,
-        accent: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-100',
+        iconStyle: 'bg-emerald-100 text-emerald-700',
       },
     ];
   }, [docStats, issueStats, unreadTotal, topChannels, upcomingEvents]);
@@ -621,6 +622,26 @@ export default function DashboardView({
     },
   ];
 
+  const heroVisual = useMemo(() => {
+    const candidate = uploadedBg ?? bg;
+    if (!candidate || candidate.trim().length === 0) return undefined;
+    return candidate;
+  }, [bg, uploadedBg]);
+
+  const heroOverlayStyle = useMemo<CSSProperties | undefined>(() => {
+    if (!heroVisual) return undefined;
+    if (heroVisual.startsWith('#')) {
+      return {
+        background: `linear-gradient(135deg, ${heroVisual} 0%, rgba(255, 255, 255, 0.65))`,
+      };
+    }
+    return {
+      backgroundImage: `linear-gradient(0deg, rgba(9, 30, 66, 0.32), rgba(9, 30, 66, 0.32)), url(${heroVisual})`,
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+    };
+  }, [heroVisual]);
+
   const openChannel = useCallback(
     async (id: string) => {
       try {
@@ -638,12 +659,12 @@ export default function DashboardView({
     if (id === 'projects') {
       return (
         <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <FolderKanban size={16} className="text-violet-200" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <FolderKanban size={16} className="text-primary" />
               프로젝트 현황
             </div>
-            <Link href="/app/issues" className="text-xs text-white/70 transition hover:text-white">
+            <Link href="/app/issues" className="text-xs font-medium text-primary transition hover:underline">
               Kanban 열기 →
             </Link>
           </div>
@@ -651,33 +672,33 @@ export default function DashboardView({
             {projectList.map((project) => (
               <div
                 key={project.id}
-                className="rounded-2xl border border-white/10 bg-white/4 p-4 shadow-inner"
+                className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <span
-                      className="h-9 w-9 rounded-2xl border border-white/20 shadow"
-                      style={{ background: project.color ?? '#6366F1' }}
+                      className="h-10 w-10 rounded-md border border-border/60 shadow-sm"
+                      style={{ background: project.color ?? '#579DFF' }}
                     />
                     <div>
-                      <div className="text-sm font-semibold text-white">{project.name}</div>
-                      <div className="text-xs text-white/60">
+                      <div className="text-sm font-semibold text-foreground">{project.name}</div>
+                      <div className="text-xs text-muted">
                         {project.owner ?? '팀 미지정'} · {formatRelative(project.updatedAt)}
                       </div>
                     </div>
                   </div>
-                  <span className="rounded-full border border-white/15 px-2.5 py-1 text-[11px] text-white/75">
+                  <span className="inline-flex items-center rounded-full bg-accent px-3 py-1 text-[11px] text-muted">
                     {project.summary ?? '이번 스프린트 목표 정리'}
                   </span>
                 </div>
                 <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-white/60">
+                  <div className="flex items-center justify-between text-xs text-muted">
                     <span>진척도</span>
                     <span>{project.progress ?? issueStats.progress}%</span>
                   </div>
-                  <div className="h-2 rounded-full bg-white/10">
+                  <div className="h-2 rounded-full bg-accent">
                     <div
-                      className="h-full rounded-full bg-violet-400"
+                      className="h-full rounded-full bg-primary/80"
                       style={{ width: `${project.progress ?? issueStats.progress}%` }}
                     />
                   </div>
@@ -704,17 +725,17 @@ export default function DashboardView({
         done: '완료',
       };
       const statusStyle: Record<Issue['status'], string> = {
-        backlog: 'bg-white/8 text-white/70',
-        todo: 'bg-white/10 text-white',
-        in_progress: 'bg-amber-400/25 text-amber-100',
-        review: 'bg-sky-400/30 text-sky-100',
-        done: 'bg-emerald-500/20 text-emerald-100',
+        backlog: 'bg-accent text-muted',
+        todo: 'bg-secondary text-secondary-foreground',
+        in_progress: 'bg-blue-100 text-blue-700',
+        review: 'bg-indigo-100 text-indigo-700',
+        done: 'bg-emerald-100 text-emerald-700',
       };
       const priorityStyle: Record<Issue['priority'], string> = {
-        low: 'bg-emerald-500/15 text-emerald-100',
-        medium: 'bg-amber-500/20 text-amber-100',
-        high: 'bg-orange-500/20 text-orange-100',
-        urgent: 'bg-rose-500/25 text-rose-100 border border-rose-400/40',
+        low: 'border border-emerald-200 bg-emerald-50 text-emerald-700',
+        medium: 'border border-amber-200 bg-amber-50 text-amber-700',
+        high: 'border border-orange-200 bg-orange-50 text-orange-700',
+        urgent: 'border border-rose-200 bg-rose-50 text-rose-700',
       };
 
       const prioritized = [...issues]
@@ -727,37 +748,37 @@ export default function DashboardView({
 
       return (
         <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <Flame size={16} className="text-rose-200" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Flame size={16} className="text-rose-500" />
               이슈 집중
             </div>
-            <div className="text-xs text-white/60">
+            <div className="text-xs text-muted">
               완료 {issueStats.done}/{issueStats.total} · 진행 {issueStats.inProgress}
             </div>
           </div>
           <div className="space-y-4 p-5">
             <div>
-              <div className="h-2 rounded-full bg-white/10">
+              <div className="h-2 rounded-full bg-accent">
                 <div
-                  className="h-full rounded-full bg-emerald-400"
+                  className="h-full rounded-full bg-emerald-500/80"
                   style={{ width: `${issueStats.progress}%` }}
                 />
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-white/60">
+              <div className="mt-2 flex items-center justify-between text-xs text-muted">
                 <span>전체 {issueStats.total}건</span>
                 <span>완료율 {issueStats.progress}%</span>
               </div>
             </div>
             {issuesLoading && (
-              <div className="space-y-3 text-sm text-white/60">
-                <div className="animate-pulse rounded-xl border border-white/10 bg-white/5 p-4">
+              <div className="space-y-3 text-sm text-muted">
+                <div className="animate-pulse rounded-lg border border-border/60 bg-accent p-4">
                   최근 이슈를 불러오는 중입니다...
                 </div>
               </div>
             )}
             {!issuesLoading && prioritized.length === 0 && (
-              <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+              <div className="rounded-lg border border-border/70 bg-background p-4 text-sm text-muted">
                 아직 등록된 이슈가 없습니다. Kanban에서 새로운 작업을 추가해 보세요.
               </div>
             )}
@@ -765,16 +786,16 @@ export default function DashboardView({
               prioritized.map((issue) => (
                 <div
                   key={issue.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner"
+                  className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-xs text-white/70">
-                      <span className="rounded-lg bg-white/10 px-2 py-1 font-medium text-white/80">
+                    <div className="flex items-center gap-2 text-xs text-muted">
+                      <span className="rounded-md border border-border/60 bg-accent px-2 py-1 font-medium text-muted">
                         {issue.key}
                       </span>
                       <span
                         className={clsx(
-                          'rounded-lg px-2 py-1 text-[11px] font-medium',
+                          'rounded-md px-2 py-1 text-[11px] font-medium',
                           statusStyle[issue.status],
                         )}
                       >
@@ -783,7 +804,7 @@ export default function DashboardView({
                     </div>
                     <span
                       className={clsx(
-                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px]',
+                        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium',
                         priorityStyle[issue.priority],
                       )}
                     >
@@ -791,8 +812,8 @@ export default function DashboardView({
                       {issue.priority.toUpperCase()}
                     </span>
                   </div>
-                  <div className="mt-2 text-sm font-semibold text-white">{issue.title}</div>
-                  <div className="mt-1 text-xs text-white/60">
+                  <div className="mt-2 text-sm font-semibold text-foreground">{issue.title}</div>
+                  <div className="mt-1 text-xs text-muted">
                     {issue.assignee ? `${issue.assignee} 담당` : '담당자 미지정'} ·{' '}
                     {formatRelative(issue.updatedAt)}
                   </div>
@@ -810,19 +831,19 @@ export default function DashboardView({
         done: '완료',
       };
       const statusStyle: Record<NonNullable<DashboardTask['status']>, string> = {
-        todo: 'bg-white/10 text-white/80',
-        doing: 'bg-sky-500/20 text-sky-100',
-        done: 'bg-emerald-500/25 text-emerald-100',
+        todo: 'bg-accent text-muted',
+        doing: 'bg-blue-100 text-blue-700',
+        done: 'bg-emerald-100 text-emerald-700',
       };
 
       return (
         <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <CheckCircle2 size={16} className="text-emerald-200" />
               내 작업
             </div>
-            <Link href="/app/issues" className="text-xs text-white/70 transition hover:text-white">
+            <Link href="/app/issues" className="text-xs text-muted transition hover:text-foreground">
               전체 보기 →
             </Link>
           </div>
@@ -832,32 +853,32 @@ export default function DashboardView({
               return (
                 <div
                   key={task.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner"
+                  className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div
                         className={clsx(
                           'text-sm font-semibold',
-                          status === 'done' ? 'text-white/70 line-through' : 'text-white',
+                          status === 'done' ? 'text-muted line-through' : 'text-foreground',
                         )}
                       >
                         {task.title}
                       </div>
-                      <div className="mt-1 text-xs text-white/60">
+                      <div className="mt-1 text-xs text-muted">
                         {task.project ?? '프로젝트 미지정'}
                       </div>
                     </div>
                     <span
                       className={clsx(
-                        'rounded-full px-2.5 py-1 text-[11px]',
+                        'rounded-full px-2.5 py-1 text-[11px] font-medium',
                         statusStyle[status],
                       )}
                     >
                       {statusLabel[status]}
                     </span>
                   </div>
-                  <div className="mt-3 flex items-center justify-between text-xs text-white/60">
+                  <div className="mt-3 flex items-center justify-between text-xs text-muted">
                     <span>{formatDue(task.due)}</span>
                     {status !== 'done' && (
                       <button
@@ -867,7 +888,7 @@ export default function DashboardView({
                             window.dispatchEvent(new Event('open-new-issue-modal'));
                           }
                         }}
-                        className="rounded-full border border-white/15 px-2 py-1 text-[11px] text-white/70 transition hover:border-white/40 hover:text-white"
+                        className="rounded-full border border-border/70 px-2 py-1 text-[11px] text-muted transition hover:border-primary/60 hover:text-primary"
                       >
                         이슈 전환
                       </button>
@@ -884,12 +905,12 @@ export default function DashboardView({
     if (id === 'chatPulse') {
       return (
         <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <MessageSquare size={16} className="text-sky-200" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <MessageSquare size={16} className="text-primary" />
               채널 활동
             </div>
-            <Link href="/app/chat" className="text-xs text-white/70 transition hover:text-white">
+            <Link href="/app/chat" className="text-xs text-muted transition hover:text-foreground">
               채팅으로 이동 →
             </Link>
           </div>
@@ -898,14 +919,14 @@ export default function DashboardView({
               chatList.map((chat) => (
                 <div
                   key={chat.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner"
+                  className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <div className="text-sm font-semibold text-white">{chat.title}</div>
-                      <div className="mt-1 text-xs text-white/60">{chat.last}</div>
+                      <div className="text-sm font-semibold text-foreground">{chat.title}</div>
+                      <div className="mt-1 text-xs text-muted">{chat.last}</div>
                     </div>
-                    <span className="text-[11px] text-white/50">{chat.date}</span>
+                    <span className="text-[11px] text-muted">{chat.date}</span>
                   </div>
                 </div>
               ))}
@@ -913,36 +934,36 @@ export default function DashboardView({
             {topChannels.map(({ id: channelId, activity, channel }) => (
               <div
                 key={channelId}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner"
+                className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-sm font-semibold text-white">
+                    <div className="text-sm font-semibold text-foreground">
                       {channel?.name ?? channelId}
                     </div>
-                    <div className="mt-1 text-xs text-white/60">
+                    <div className="mt-1 text-xs text-muted">
                       {activity?.lastPreview ?? '최근 메시지를 요약하는 중입니다.'}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => openChannel(channelId)}
-                    className="rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 transition hover:border-white/45 hover:text-white"
+                    className="rounded-full border border-border/70 px-3 py-1 text-xs text-muted transition hover:border-primary/60 hover:text-primary"
                   >
                     열기
                   </button>
                 </div>
-                <div className="mt-2 flex items-center gap-3 text-[11px] text-white/55">
+                <div className="mt-2 flex items-center gap-3 text-[11px] text-muted">
                   <span>
                     {activity?.lastAuthor ?? '시스템'} · {formatRelative(activity?.lastMessageTs)}
                   </span>
                   {activity?.unreadCount ? (
-                    <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-rose-100">
+                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-rose-700">
                       미읽기 {activity.unreadCount}
                     </span>
                   ) : null}
                   {activity?.mentionCount ? (
-                    <span className="rounded-full bg-amber-400/20 px-2 py-0.5 text-amber-100">
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-700">
                       멘션 {activity.mentionCount}
                     </span>
                   ) : null}
@@ -957,37 +978,39 @@ export default function DashboardView({
     if (id === 'docs') {
       return (
         <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <FileText size={16} className="text-violet-200" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <FileText size={16} className="text-primary" />
               Docs 업데이트
             </div>
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
+              className="gap-1"
               onClick={() => router.push('/app/docs')}
-              className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 transition hover:border-white/45 hover:text-white"
             >
               <Plus size={12} />
               새 문서
-            </button>
+            </Button>
           </div>
           <div className="space-y-4 p-5">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs uppercase tracking-wide text-white/60">Docs 페이지</div>
-                <div className="mt-3 text-2xl font-semibold text-white">
+              <div className="rounded-lg border border-border/70 bg-background p-4 shadow-sm">
+                <div className="text-xs uppercase tracking-wide text-muted">Docs 페이지</div>
+                <div className="mt-3 text-2xl font-semibold text-foreground">
                   {docStats.pages.toLocaleString()}
                 </div>
-                <div className="mt-2 text-xs text-white/55">
+                <div className="mt-2 text-xs text-foreground/55">
                   스냅샷 {docStats.snapshots.toLocaleString()}건 저장됨
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-xs uppercase tracking-wide text-white/60">최근 저장</div>
-                <div className="mt-3 text-2xl font-semibold text-white">
+              <div className="rounded-lg border border-border/70 bg-background p-4 shadow-sm">
+                <div className="text-xs uppercase tracking-wide text-muted">최근 저장</div>
+                <div className="mt-3 text-2xl font-semibold text-foreground">
                   {docStats.lastSaved ? formatRelative(docStats.lastSaved) : '기록 없음'}
                 </div>
-                <div className="mt-2 text-xs text-white/55">
+                <div className="mt-2 text-xs text-foreground/55">
                   Outline · History 패널에서 바로 복구할 수 있어요.
                 </div>
               </div>
@@ -996,17 +1019,17 @@ export default function DashboardView({
               {docHighlightList.map((doc) => (
                 <li
                   key={doc.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner"
+                  className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-white">{doc.title}</div>
-                    <span className="inline-flex items-center gap-1 text-[11px] text-violet-100">
+                    <div className="text-sm font-semibold text-foreground">{doc.title}</div>
+                    <span className="inline-flex items-center gap-1 text-[11px] text-primary">
                       <Sparkles size={12} />
                       {formatRelative(doc.updatedAt)}
                     </span>
                   </div>
-                  <p className="mt-2 text-xs text-white/65">{doc.summary}</p>
-                  <p className="mt-3 text-[11px] text-white/50">{doc.owner} 작성</p>
+                  <p className="mt-2 text-xs text-muted">{doc.summary}</p>
+                  <p className="mt-3 text-[11px] text-muted">{doc.owner} 작성</p>
                 </li>
               ))}
             </ul>
@@ -1018,39 +1041,41 @@ export default function DashboardView({
     if (id === 'calendar') {
       return (
         <GlassCard>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <CalendarDays size={16} className="text-emerald-200" />
+          <div className="flex items-center justify-between border-b border-border px-5 py-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <CalendarDays size={16} className="text-emerald-500" />
               다가오는 일정
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted hover:text-primary"
               onClick={() => router.push('/app/calendar')}
-              className="text-xs text-white/70 transition hover:text-white"
             >
               캘린더 열기 →
-            </button>
+            </Button>
           </div>
           <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
             <MiniCalendar events={eventList} />
             <div className="space-y-3">
               {upcomingEvents.length === 0 && (
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+                <div className="rounded-lg border border-border/70 bg-background p-4 text-sm text-muted">
                   예정된 일정이 없습니다. Google Calendar와 연동해 보세요.
                 </div>
               )}
               {upcomingEvents.map((event) => (
                 <div
                   key={event.id}
-                  className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner"
+                  className="rounded-lg border border-border/70 bg-background p-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold text-white">{event.title}</div>
-                    <span className="text-[11px] text-white/60">{event.provider ?? 'internal'}</span>
+                    <div className="text-sm font-semibold text-foreground">{event.title}</div>
+                    <span className="text-[11px] text-muted">{event.provider ?? 'internal'}</span>
                   </div>
-                  <div className="mt-2 text-xs text-white/60">{formatEventTime(event)}</div>
+                  <div className="mt-2 text-xs text-muted">{formatEventTime(event)}</div>
                   {event.location && (
-                    <div className="mt-1 text-[11px] text-white/50">{event.location}</div>
+                    <div className="mt-1 text-[11px] text-muted">{event.location}</div>
                   )}
                 </div>
               ))}
@@ -1066,30 +1091,22 @@ export default function DashboardView({
   const visibleWidgets = widgets.filter((widget) => widget.visible);
 
   return (
-    <div className="relative h-full w-full overflow-y-auto">
-      <div
-        className="absolute inset-0 -z-20 bg-cover bg-center"
-        style={{
-          backgroundImage:
-            uploadedBg || (bg && !bg.startsWith('#')) ? `url(${uploadedBg ?? bg})` : undefined,
-          backgroundColor: bg?.startsWith('#') ? bg : undefined,
-        }}
-      />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-950/95 via-slate-950/92 to-slate-950/88" />
-
-      <div className="relative z-0 space-y-6 p-6 pb-12">
-        <section className="relative overflow-hidden rounded-3xl border border-white/15 bg-gradient-to-r from-indigo-600/90 via-violet-600/85 to-sky-600/80 text-white shadow-[0_24px_60px_rgba(15,23,42,0.45)]">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-          <div className="relative z-10 flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-white/80">
-                Flowdash Control Center
+    <div className="h-full w-full overflow-y-auto bg-background">
+      <div className="mx-auto flex h-full max-w-6xl flex-col gap-8 px-4 py-8 lg:px-10">
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-panel px-6 py-8 shadow-sm">
+          {heroOverlayStyle ? (
+            <div className="absolute inset-0 opacity-25" style={heroOverlayStyle} />
+          ) : null}
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground shadow-sm">
+                <PanelsTopLeft size={16} />
+                워크스페이스 요약
               </div>
-              <h1 className="flex items-center gap-3 text-3xl font-semibold leading-snug sm:text-[34px]">
-                <PanelsTopLeft size={28} className="text-white/85" />
+              <h1 className="text-3xl font-semibold leading-tight text-foreground sm:text-[34px]">
                 {userName}님, {greet}!
               </h1>
-              <p className="text-sm text-white/80 sm:text-base">
+              <p className="max-w-2xl text-sm text-muted sm:text-base">
                 Docs · Chat · Issues · Calendar를 한 화면에서 조율하세요. 진행 상황을 빠르게 점검하고,
                 필요한 Surface로 곧바로 이동할 수 있습니다.
               </p>
@@ -1099,26 +1116,32 @@ export default function DashboardView({
                 const Icon = action.icon;
                 if (action.href) {
                   return (
-                    <Link
+                    <Button
                       key={action.id}
-                      href={action.href}
-                      className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-xs font-medium text-white transition hover:border-white/60 hover:bg-white/25"
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
                     >
-                      <Icon size={14} />
-                      {action.label}
-                    </Link>
+                      <Link href={action.href}>
+                        <Icon size={14} />
+                        {action.label}
+                      </Link>
+                    </Button>
                   );
                 }
                 return (
-                  <button
+                  <Button
                     key={action.id}
                     type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
                     onClick={action.onClick}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-4 py-2 text-xs font-medium text-white transition hover:border-white/60 hover:bg-white/25"
                   >
                     <Icon size={14} />
                     {action.label}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -1131,31 +1154,28 @@ export default function DashboardView({
             return (
               <div
                 key={metric.id}
-                className={clsx(
-                  'rounded-3xl border border-white/12 bg-white/6 p-5 shadow-inner backdrop-blur',
-                  metric.accent,
-                )}
+                className="rounded-xl border border-border bg-background p-5 shadow-sm"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div>
-                    <div className="text-xs uppercase tracking-wider text-white/75">
+                    <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
                       {metric.label}
                     </div>
-                    <div className="mt-3 text-3xl font-semibold text-white">
+                    <div className="mt-3 text-3xl font-semibold text-foreground">
                       {metric.value.toLocaleString()}
                     </div>
                   </div>
-                  <span className="rounded-full bg-white/15 p-2 text-white/90">
+                  <span className={clsx('rounded-full p-2 shadow-sm', metric.iconStyle)}>
                     <Icon size={18} />
                   </span>
                 </div>
-                <p className="mt-4 text-xs text-white/75">{metric.hint}</p>
+                <p className="mt-4 text-xs text-muted">{metric.hint}</p>
               </div>
             );
           })}
         </section>
 
-        <section className="pb-10">
+        <section className="pb-12">
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="dashboard-widgets">
               {(dropProvided) => (

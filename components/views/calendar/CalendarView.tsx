@@ -412,7 +412,7 @@ export default function CalendarView({
             </div>
             <div className="mt-3 space-y-2 text-xs text-muted">
               {upcomingEvents.length === 0 && (
-                <div className="rounded-xl border border-dashed border-border/60 bg-subtle/30 px-3 py-4 text-center text-sm">
+                <div className="rounded-xl border border-dashed border-border/60 bg-accent/30 px-3 py-4 text-center text-sm">
                   예정된 일정이 없습니다.
                 </div>
               )}
@@ -430,7 +430,7 @@ export default function CalendarView({
                     <div className="text-xs text-muted">
                       {format(start, 'M월 d일 (EEE) HH:mm', { locale: ko })}
                     </div>
-                    <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-border/60 bg-subtle/40 px-2 py-0.5 text-[11px]">
+                    <div className="mt-1 inline-flex items-center gap-2 rounded-full border border-border/60 bg-accent/40 px-2 py-0.5 text-[11px]">
                       {ev.provider} / {ev.calendarId}
                     </div>
                   </div>
@@ -464,7 +464,7 @@ export default function CalendarView({
                   className={clsx(
                     'inline-flex items-center gap-2 rounded-full border px-3 py-1 transition',
                     calendar.visible
-                      ? 'border-border bg-subtle/80 text-foreground'
+                      ? 'border-border bg-accent/80 text-foreground'
                       : 'border-border/60 text-muted opacity-70',
                   )}
                   style={{ borderColor: calendar.color }}
@@ -525,7 +525,7 @@ export default function CalendarView({
                         </div>
                       ))}
                       {overflow > 0 && (
-                        <div className="truncate rounded-lg border border-border/70 bg-subtle/40 px-2 py-1 text-[11px] text-muted">
+                        <div className="truncate rounded-lg border border-border/70 bg-accent/40 px-2 py-1 text-[11px] text-muted">
                           +{overflow}개 더보기
                         </div>
                       )}
@@ -538,7 +538,7 @@ export default function CalendarView({
 
           {view === 'week' && (
             <div className="overflow-hidden rounded-2xl border border-border bg-background">
-              <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-border bg-subtle/40 text-xs">
+              <div className="grid grid-cols-[80px_repeat(7,1fr)] border-b border-border bg-accent/40 text-xs">
                 <div className="px-3 py-2 text-muted">종일</div>
                 {weekRange.map((date) => (
                   <div
@@ -674,7 +674,7 @@ export default function CalendarView({
               </div>
               <button
                 onClick={() => setDrawerOpen(false)}
-                className="rounded-md border border-border px-2 py-1 text-xs hover:bg-subtle/60"
+                className="rounded-md border border-border px-2 py-1 text-xs hover:bg-accent/60"
               >
                 닫기
               </button>
@@ -692,7 +692,7 @@ export default function CalendarView({
                   }}
                 />
                 <button
-                  className="rounded-md border border-border px-3 py-2 text-xs hover:bg-subtle/60"
+                  className="rounded-md border border-border px-3 py-2 text-xs hover:bg-accent/60"
                   onClick={() => alert('상세 작성은 추후 지원 예정입니다.')}
                 >
                   상세
@@ -727,7 +727,7 @@ export default function CalendarView({
                   </div>
                 ))}
                 {(eventsByDate.get(toKey(drawerDate)) ?? []).length === 0 && (
-                  <div className="rounded-xl border border-dashed border-border/70 bg-subtle/40 p-4 text-sm text-muted">
+                  <div className="rounded-xl border border-dashed border-border/70 bg-accent/40 p-4 text-sm text-muted">
                     아직 일정이 없습니다. 바로 추가해보세요.
                   </div>
                 )}
@@ -739,3 +739,4 @@ export default function CalendarView({
     </div>
   );
 }
+

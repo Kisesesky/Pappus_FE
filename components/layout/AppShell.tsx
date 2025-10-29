@@ -27,7 +27,7 @@ export default function AppShell({
   const contentMinHeight = header ? 'calc(100vh - 56px)' : '100vh';
 
   return (
-    <div className={clsx('min-h-screen w-full bg-background text-foreground flex flex-col', className)}>
+    <div className={clsx('min-h-screen w-full bg-background text-foreground flex flex-col overflow-hidden', className)}>
       {/* ??? ??? */}
       {header && (
         <div className="h-14 shrink-0 border-b border-border bg-panel shadow-panel sticky top-0 z-40">
@@ -36,7 +36,7 @@ export default function AppShell({
       )}
 
       <div
-        className="flex-1 flex flex-col md:flex-row"
+        className="flex-1 flex flex-col md:flex-row overflow-hidden"
         style={{ minHeight: contentMinHeight }}
       >
         {/* ???? ????? */}
@@ -49,7 +49,7 @@ export default function AppShell({
         {/* ???? + (?��)?????? */}
         <div
           className={clsx(
-            'flex-1 min-w-0 flex flex-col',
+            'flex-1 min-w-0 flex flex-col overflow-hidden',
             hasRight && 'md:grid'
           )}
           style={hasRight ? { gridTemplateColumns: `minmax(0, 1fr) ${rightWidth}px` } : undefined}
@@ -76,3 +76,4 @@ export default function AppShell({
     </div>
   );
 }
+

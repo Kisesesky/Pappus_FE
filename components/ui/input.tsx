@@ -5,7 +5,7 @@ export default function Input({ className, ...props }: Props) {
   return (
     <input
       className={cn(
-        "w-full bg-subtle/60 border border-border rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-brand/60",
+        "w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted outline-none transition focus:border-primary focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background",
         className
       )}
       {...props}

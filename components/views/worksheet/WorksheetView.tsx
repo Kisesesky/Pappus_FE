@@ -7,9 +7,9 @@ import { ko } from "date-fns/locale";
 import { useWorksheet, WorksheetMeta, WorksheetStatus, WorksheetColumn } from "@/store/worksheet";
 
 const STATUS_LABEL: Record<WorksheetStatus, { label: string; className: string }> = {
-  draft: { label: "Draft", className: "bg-slate-200 text-slate-700 dark:bg-slate-700/60 dark:text-slate-200" },
-  "in-review": { label: "In Review", className: "bg-amber-100 text-amber-700 dark:bg-amber-700/30 dark:text-amber-200" },
-  done: { label: "Done", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-700/30 dark:text-emerald-200" },
+  draft: { label: "Draft", className: "bg-accent text-muted" },
+  "in-review": { label: "In Review", className: "border border-amber-200 bg-amber-50 text-amber-700" },
+  done: { label: "Done", className: "bg-emerald-100 text-emerald-700" },
 };
 
 function formatRelative(ts: number) {
@@ -23,7 +23,7 @@ function formatRelative(ts: number) {
 function WorksheetTable({ rows, onOpen }: { rows: WorksheetMeta[]; onOpen: (id: string) => void }) {
   if (rows.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-subtle/40 py-16 text-sm text-muted">
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-accent/40 py-16 text-sm text-muted">
         <p className="font-medium text-foreground/80">No worksheets yet</p>
         <p className="mt-1 text-xs">Create your first worksheet to centralize checklists, matrices, and more.</p>
       </div>
@@ -31,9 +31,9 @@ function WorksheetTable({ rows, onOpen }: { rows: WorksheetMeta[]; onOpen: (id: 
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-panel/60 shadow">
+    <div className="overflow-hidden rounded-xl border border-border bg-panel shadow">
       <table className="w-full border-collapse text-sm">
-        <thead className="bg-subtle/50 text-muted">
+        <thead className="bg-accent/50 text-muted">
           <tr className="text-left">
             <th className="px-4 py-2 font-medium">Title</th>
             <th className="px-4 py-2 font-medium">Owner</th>
@@ -46,7 +46,7 @@ function WorksheetTable({ rows, onOpen }: { rows: WorksheetMeta[]; onOpen: (id: 
           {rows.map((row) => {
             const badge = STATUS_LABEL[row.status];
             return (
-              <tr key={row.id} className="border-t border-border/60 hover:bg-subtle/60">
+              <tr key={row.id} className="border-t border-border/60 hover:bg-accent/60">
                 <td className="px-4 py-2">
                   <div className="font-medium text-foreground/90">{row.title}</div>
                   <div className="text-xs text-muted">{row.id}</div>
@@ -164,23 +164,23 @@ export default function WorksheetView() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex items-center justify-between border-b border-border bg-panel/60 px-4 py-3 backdrop-blur">
+      <header className="flex items-center justify-between border-b border-border bg-panel px-4 py-3 backdrop-blur">
         <div>
           <div className="text-xs uppercase tracking-wide text-muted">Worksheet</div>
           <h1 className="text-lg font-semibold leading-tight text-foreground">Worksheet Studio</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={handleCreate} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-subtle/60">
+          <button onClick={handleCreate} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent/60">
             New Worksheet
           </button>
           <button
             onClick={handleDuplicate}
             disabled={!activeWorksheetId}
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-subtle/60 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-accent/60 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Duplicate
           </button>
-          <button className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-subtle/60">
+          <button className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent/60">
             Template Gallery
           </button>
           <button
@@ -203,11 +203,11 @@ export default function WorksheetView() {
             <div className="flex gap-2">
               <input
                 type="search"
-                className="w-48 rounded-md border border-border bg-subtle/60 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-brand/60"
+                className="w-48 rounded-md border border-border bg-accent/60 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-brand/60"
                 placeholder="Search worksheets"
                 disabled
               />
-              <button className="rounded-md border border-border px-2 py-1 text-xs text-muted hover:bg-subtle/60" disabled>
+              <button className="rounded-md border border-border px-2 py-1 text-xs text-muted hover:bg-accent/60" disabled>
                 Filter
               </button>
             </div>
@@ -263,7 +263,7 @@ export default function WorksheetView() {
               <h2 className="text-sm font-semibold text-foreground/90">Worksheet rows</h2>
               <button
                 onClick={handleAddRow}
-                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-subtle/60"
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent/60"
               >
                 Add row
               </button>
@@ -271,7 +271,7 @@ export default function WorksheetView() {
 
             <div className="overflow-auto rounded-xl border border-border bg-panel/50 shadow">
               <table className="w-full min-w-[600px] border-collapse text-sm">
-                <thead className="bg-subtle/50 text-muted">
+                <thead className="bg-accent/50 text-muted">
                   <tr className="text-left">
                     {activeWorksheet.columns.map((column) => (
                       <th key={column.id} className="px-4 py-2 font-medium">
@@ -290,7 +290,7 @@ export default function WorksheetView() {
                     </tr>
                   ) : (
                     activeWorksheet.rows.map((row) => (
-                      <tr key={row.id} className="border-t border-border/60 hover:bg-subtle/60">
+                      <tr key={row.id} className="border-t border-border/60 hover:bg-accent/60">
                         {activeWorksheet.columns.map((column) => {
                           const cell = row.cells.find((item) => item.columnId === column.id);
                           const value = cell?.value ?? '';
@@ -369,3 +369,4 @@ export default function WorksheetView() {
     </div>
   );
 }
+

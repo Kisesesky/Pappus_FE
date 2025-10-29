@@ -1,4 +1,4 @@
-// components/views/docs/DocView.tsx
+﻿// components/views/docs/DocView.tsx
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -935,7 +935,7 @@ useEffect(() => {
           <div className="flex items-center gap-2">
             <div className="relative" ref={templateMenuRef}>
               <button
-                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-accent/60"
                 onClick={() => setTemplateOpen((prev) => !prev)}
               >
                 <Sparkles size={14}/> 템플릿
@@ -954,7 +954,7 @@ useEffect(() => {
             </div>
             <div className="relative" ref={integrationMenuRef}>
               <button
-                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-accent/60"
                 onClick={() => setIntegrationOpen((prev) => !prev)}
               >
                 <Plug size={14}/> 연동
@@ -978,14 +978,14 @@ useEffect(() => {
               )}
             </div>
             <button
-              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-accent/60"
               onClick={manualSaveSnapshot}
               title="현재 문서를 스냅샷으로 저장"
             >
               <Save size={14}/> 저장
             </button>
             <button
-              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
+              className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded border border-border hover:bg-accent/60"
               onClick={() => setHistOpen(true)}
               title="버전 히스토리"
             >
@@ -997,71 +997,71 @@ useEffect(() => {
         {/* 상단 툴바 */}
         <div className="px-4 pt-3">
           <div className="inline-flex items-center gap-1 rounded-md border border-border bg-panel p-1">
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleBold().run()} title="굵게"><Bold size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleItalic().run()} title="기울임"><Italic size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleCode().run()} title="인라인 코드"><Code size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleBulletList().run()} title="글머리 목록"><List size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleOrderedList().run()} title="번호 목록"><ListOrdered size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleTaskList().run()} title="체크리스트"><CheckSquare size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> editor?.chain().focus().toggleCodeBlock().run()} title="코드 블록"><Plus size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> imgInputRef.current?.click()} title="이미지 삽입"><ImageIcon size={14}/></button>
-            <button className="p-1 rounded hover:bg-subtle/60" onClick={()=> fileInputRef.current?.click()} title="파일 첨부"><FileIcon size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleBold().run()} title="굵게"><Bold size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleItalic().run()} title="기울임"><Italic size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleCode().run()} title="인라인 코드"><Code size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleBulletList().run()} title="글머리 목록"><List size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleOrderedList().run()} title="번호 목록"><ListOrdered size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleTaskList().run()} title="체크리스트"><CheckSquare size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> editor?.chain().focus().toggleCodeBlock().run()} title="코드 블록"><Plus size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> imgInputRef.current?.click()} title="이미지 삽입"><ImageIcon size={14}/></button>
+            <button className="p-1 rounded hover:bg-accent/60" onClick={()=> fileInputRef.current?.click()} title="파일 첨부"><FileIcon size={14}/></button>
 
             {/* 표 삽입 */}
-            <button className={`p-1 rounded hover:bg-subtle/60 ${!hasTable ? 'opacity-50 cursor-not-allowed':''}`}
+            <button className={`p-1 rounded hover:bg-accent/60 ${!hasTable ? 'opacity-50 cursor-not-allowed':''}`}
                     onClick={()=> runCmd('table')} title="표 삽입(3×3)" disabled={!hasTable}>
               <TableIcon size={14}/>
             </button>
 
             {/* 표 컨트롤 */}
             <div className="mx-2 h-5 w-px bg-border" />
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().addRowAfter().run()} title="행 추가(아래)"><Rows size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().addColumnAfter().run()} title="열 추가(오른쪽)"><Columns size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().toggleHeaderRow().run()} title="헤더 행 토글"><LayoutPanelTop size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().toggleHeaderColumn().run()} title="헤더 열 토글"><LayoutPanelLeft size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().deleteRow().run()} title="행 삭제"><Rows size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().deleteColumn().run()} title="열 삭제"><Columns size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().deleteTable().run()} title="표 삭제"><Trash2 size={14}/></button>
 
             {/* 병합/분할 */}
             <div className="mx-2 h-5 w-px bg-border" />
-            <button className={`px-2 py-1 text-[11px] rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`px-2 py-1 text-[11px] rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().mergeCells().run()} title="셀 병합">병합</button>
-            <button className={`px-2 py-1 text-[11px] rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`px-2 py-1 text-[11px] rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().splitCell().run()} title="셀 분할">분할</button>
-            <button className={`px-2 py-1 text-[11px] rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`px-2 py-1 text-[11px] rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> (editor as any).chain().focus().mergeOrSplit().run()} title="병합/분할 자동">자동</button>
 
             {/* 정렬/배경/텍스트색/Bold/폰트사이즈 */}
             <div className="mx-2 h-5 w-px bg-border" />
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> setCellStyle({ textAlign: 'left' })} title="셀 좌측 정렬"><AlignLeft size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> setCellStyle({ textAlign: 'center' })} title="셀 가운데 정렬"><AlignCenter size={14}/></button>
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> setCellStyle({ textAlign: 'right' })} title="셀 우측 정렬"><AlignRight size={14}/></button>
 
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> document.getElementById('cell-bg-color')?.dispatchEvent(new MouseEvent('click', { bubbles:true }))} title="셀 배경색"><Droplet size={14}/></button>
             <input id="cell-bg-color" type="color" hidden onChange={(e)=> setCellStyle({ backgroundColor: e.target.value })}/>
 
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> document.getElementById('cell-text-color')?.dispatchEvent(new MouseEvent('click', { bubbles:true }))} title="텍스트 색"><Palette size={14}/></button>
             <input id="cell-text-color" type="color" hidden onChange={(e)=> setCellStyle({ color: e.target.value })}/>
 
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> setCellStyle({ fontWeight: 'bold' })} title="셀 글자 굵게"><Bold size={14}/></button>
 
-            <button className={`p-1 rounded ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> setCellStyle({ fontSizeDelta: +1 })} title="글자 크게"><TypeIcon size={14}/></button>
-            <button className={`p-1 rounded rotate-180 ${inTable?'hover:bg-subtle/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
+            <button className={`p-1 rounded rotate-180 ${inTable?'hover:bg-accent/60':'opacity-50 cursor-not-allowed'}`} disabled={!inTable}
                     onClick={()=> setCellStyle({ fontSizeDelta: -1 })} title="글자 작게"><TypeIcon size={14}/></button>
           </div>
         </div>
@@ -1082,31 +1082,31 @@ useEffect(() => {
             onMouseLeave={() => setSlashOpen(false)}
           >
             <div className="doc-slash-label">기본 블록</div>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("todo")}><CheckSquare size={14}/> 체크리스트</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("ul")}><List size={14}/> 글머리</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("ol")}><ListOrdered size={14}/> 번호 목록</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("code")}><Code size={14}/> 코드 블록</button>
-            <button className={`flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60 ${!hasTable?'opacity-50 cursor-not-allowed':''}`}
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("todo")}><CheckSquare size={14}/> 체크리스트</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("ul")}><List size={14}/> 글머리</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("ol")}><ListOrdered size={14}/> 번호 목록</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("code")}><Code size={14}/> 코드 블록</button>
+            <button className={`flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60 ${!hasTable?'opacity-50 cursor-not-allowed':''}`}
                     onClick={()=> runCmd("table")} disabled={!hasTable}><TableIcon size={14}/> 표 (3×3)</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("image")}><ImageIcon size={14}/> 이미지</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("file")}><FileIcon size={14}/> 파일</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("image")}><ImageIcon size={14}/> 이미지</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("file")}><FileIcon size={14}/> 파일</button>
 
             <div className="doc-slash-divider" />
             <div className="doc-slash-label">고급 블록</div>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-info")}><Info size={14}/> 정보 콜아웃</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-success")}><CheckCircle2 size={14}/> 성공 콜아웃</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-warning")}><AlertTriangle size={14}/> 경고 콜아웃</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("callout-danger")}><AlertTriangle size={14}/> 위험 콜아웃</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("timeline")}><Timer size={14}/> 타임라인</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("kanban")}><LayoutDashboard size={14}/> 칸반 보드</button>
-            <button className={`flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60 ${!hasTable?'opacity-50 cursor-not-allowed':''}`}
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("callout-info")}><Info size={14}/> 정보 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("callout-success")}><CheckCircle2 size={14}/> 성공 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("callout-warning")}><AlertTriangle size={14}/> 경고 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("callout-danger")}><AlertTriangle size={14}/> 위험 콜아웃</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("timeline")}><Timer size={14}/> 타임라인</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("kanban")}><LayoutDashboard size={14}/> 칸반 보드</button>
+            <button className={`flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60 ${!hasTable?'opacity-50 cursor-not-allowed':''}`}
                     onClick={()=> runCmd("database")} disabled={!hasTable}><Database size={14}/> 데이터 뷰</button>
 
             <div className="doc-slash-divider" />
             <div className="doc-slash-label">외부 연동</div>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("embed-github")}><GitBranch size={14}/> GitHub 카드</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("embed-figma")}><Palette size={14}/> Figma 임베드</button>
-            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-subtle/60" onClick={()=> runCmd("embed-drive")}><Cloud size={14}/> Drive 임베드</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("embed-github")}><GitBranch size={14}/> GitHub 카드</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("embed-figma")}><Palette size={14}/> Figma 임베드</button>
+            <button className="flex w-56 items-center gap-2 px-3 py-2 hover:bg-accent/60" onClick={()=> runCmd("embed-drive")}><Cloud size={14}/> Drive 임베드</button>
           </div>
         )}
 
@@ -1124,13 +1124,13 @@ useEffect(() => {
                       <div className="text-xs text-muted">{new Date(snap.ts).toLocaleString()}</div>
                       {snap.note && <div className="text-sm">{snap.note}</div>}
                     </div>
-                    <button className="text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60" onClick={()=> restoreSnapshot(snap)}>복원</button>
-                    <button className="text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60" onClick={()=> deleteSnapshot(snap.id)}>삭제</button>
+                    <button className="text-xs px-2 py-1 rounded border border-border hover:bg-accent/60" onClick={()=> restoreSnapshot(snap)}>복원</button>
+                    <button className="text-xs px-2 py-1 rounded border border-border hover:bg-accent/60" onClick={()=> deleteSnapshot(snap.id)}>삭제</button>
                   </div>
                 ))}
               </div>
               <div className="mt-3 text-right">
-                <button className="text-xs px-3 py-1 rounded border border-border hover:bg-subtle/60" onClick={()=> setHistOpen(false)}>닫기</button>
+                <button className="text-xs px-3 py-1 rounded border border-border hover:bg-accent/60" onClick={()=> setHistOpen(false)}>닫기</button>
               </div>
             </div>
 
