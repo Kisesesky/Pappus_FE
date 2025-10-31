@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { Msg } from '@/store/chat';
+import type { Msg } from '@/types/chat';
 
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
@@ -90,4 +90,3 @@ export function useMessageSections({
     };
   }, [messages, lastReadTs, meId, users]);
 }
-

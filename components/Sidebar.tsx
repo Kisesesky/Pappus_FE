@@ -137,8 +137,6 @@ type ChannelRowProps = {
   isMuted: boolean;
   unread: number;
   mentions: number;
-  preview?: string;
-  lastAuthor?: string;
   isStarred: boolean;
   isTyping: boolean;
   onSelect: (id: string) => void;
@@ -155,8 +153,6 @@ function ChannelRow({
   isMuted,
   unread,
   mentions,
-  preview,
-  lastAuthor,
   isStarred,
   isTyping,
   onSelect,
@@ -164,8 +160,6 @@ function ChannelRow({
 }: ChannelRowProps) {
   const badgeCount = mentions > 0 ? mentions : unread;
   const badgeText = badgeCount > 99 ? "99+" : badgeCount > 0 ? String(badgeCount) : "";
-  const previewLine = preview ? `${lastAuthor ? `${lastAuthor}: ` : ""}${preview}` : "";
-  const previewText = previewLine.length > 60 ? `${previewLine.slice(0, 60)}…` : previewLine;
   const initials = isDM
     ? label.replace(/^@/, "").trim().split(/\s+/).map((part) => part[0] ?? "").join("").slice(0, 2).toUpperCase()
     : "";
@@ -197,11 +191,8 @@ function ChannelRow({
             {label}
           </span>
           {isMuted && <VolumeX size={12} className="text-sidebar-foreground/40" />}
-          {isTyping && <span className="text-[11px] text-emerald-500">typing…</span>}
+          {isTyping && <span className="text-[11px] text-emerald-500">typing...</span>}
         </div>
-        {previewText && (
-          <div className="mt-1 truncate text-xs text-sidebar-foreground/60">{previewText}</div>
-        )}
       </div>
       <div className="flex items-center gap-1">
         {badgeText && (
@@ -431,7 +422,7 @@ export default function Sidebar() {
   }, [pathname, router]);
 
   return (
-    <aside className="h-full w-full flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+    <div className="flex min-h-0 w-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="border-b border-sidebar-border px-3 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary/90 text-sidebar-primary-foreground font-semibold">
@@ -545,8 +536,6 @@ export default function Sidebar() {
                         isMuted: !!channelTopics[id]?.muted,
                         unread: activity?.unreadCount ?? 0,
                         mentions: activity?.mentionCount ?? 0,
-                        preview: activity?.lastPreview,
-                        lastAuthor: activity?.lastAuthor,
                         isStarred: starredSet.has(id),
                         isTyping: (typingUsers[id] || []).length > 0,
                       } as ChannelRowProps;
@@ -619,7 +608,6 @@ export default function Sidebar() {
                         <FileText size={14} className="text-muted" />
                         <span className="truncate">{doc.title}</span>
                       </div>
-                      <div className="mt-1 text-xs text-muted opacity-80">{doc.description}</div>
                     </button>
                   );
                 })}
@@ -632,6 +620,6 @@ export default function Sidebar() {
       <div className="p-3 border-t border-border text-xs text-muted">
         ⌘K Command Palette / v0.1
       </div>
-    </aside>
+    </div>
   );
 }

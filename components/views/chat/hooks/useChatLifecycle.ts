@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { MutableRefObject } from 'react';
-import type { Msg } from '@/store/chat';
+import type { Msg } from '@/types/chat';
 
 type UseChatLifecycleParams = {
   channelId: string;

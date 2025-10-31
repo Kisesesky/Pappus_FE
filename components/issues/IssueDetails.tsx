@@ -72,7 +72,7 @@ export default function IssueDetails({
   })();
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="h-14 px-4 border-b border-border flex items-center justify-between">
         <div className="font-semibold">Issue Details</div>
         <button onClick={onClose} className="px-2 py-1 border border-border rounded-md text-xs hover:bg-subtle/60">닫기</button>

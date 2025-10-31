@@ -4,7 +4,8 @@
 import React, { useMemo, useCallback } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
-import { useWorksheet, WorksheetMeta, WorksheetStatus, WorksheetColumn } from "@/store/worksheet";
+import { useWorksheet } from "@/store/worksheet";
+import type { WorksheetMeta, WorksheetStatus, WorksheetColumn } from "@/types/worksheet";
 
 const STATUS_LABEL: Record<WorksheetStatus, { label: string; className: string }> = {
   draft: { label: "Draft", className: "bg-accent text-muted" },
@@ -163,7 +164,7 @@ export default function WorksheetView() {
   };
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-border bg-panel px-4 py-3 backdrop-blur">
         <div>
           <div className="text-xs uppercase tracking-wide text-muted">Worksheet</div>

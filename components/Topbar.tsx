@@ -32,7 +32,7 @@ export default function Topbar() {
           <Search className="pointer-events-none absolute left-3 top-2.5 text-muted" size={16} />
           <input
             className="w-full rounded-md border border-border bg-accent pl-9 pr-3 py-2 text-sm text-foreground outline-none transition focus:border-primary focus:ring-1 focus:ring-ring"
-            placeholder="Search or run command (?K)"
+            placeholder="Search or run command (⌘+K)"
           />
         </div>
       </div>

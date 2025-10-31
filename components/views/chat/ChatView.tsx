@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { MouseEvent } from "react";
 import { useChat } from "@/store/chat";
 import Composer from "@/components/chat/Composer";
-import type { Msg } from "@/store/chat";
+import type { Msg } from "@/types/chat";
 import { useToast } from "@/components/ui/Toast";
 import MessageContextMenu from "@/components/chat/MessageContextMenu";
 import HuddleBar from "@/components/chat/HuddleBar";
@@ -329,7 +329,7 @@ export default function ChatView() {
   });
 
   return (
-    <div className="h-full grid grid-rows-[auto_auto_auto_auto_1fr_auto]">
+    <div className="grid min-h-0 flex-1 grid-rows-[auto_auto_auto_auto_1fr_auto]">
       <HuddleBar channelId={channelId} />
 
       {/* 실시간 읽는중 바 (다른 탭/브라우저와 브로드캐스트) */}

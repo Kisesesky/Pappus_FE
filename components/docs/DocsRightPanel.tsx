@@ -11,7 +11,7 @@ export default function DocsRightPanel() {
   const [tab, setTab] = useState<'outline' | 'history'>('outline');
 
   return (
-    <aside className="h-full w-full">
+    <div className="flex min-h-0 w-full flex-col">
       <div className="h-14 px-4 border-b border-border flex items-center font-semibold">
         {tab === 'outline' ? 'Outline' : 'History'}
       </div>
@@ -28,7 +28,7 @@ export default function DocsRightPanel() {
       <div className="p-3">
         {tab === 'outline' ? <OutlineView /> : <HistoryView />}
       </div>
-    </aside>
+    </div>
   );
 }
 

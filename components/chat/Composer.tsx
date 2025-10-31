@@ -3,7 +3,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Paperclip, Send, Bold, Code, Quote, SmilePlus, AtSign, Upload, X } from "lucide-react";
-import type { FileItem } from "@/store/chat";
+import type { FileItem } from "@/types/chat";
 import MentionPopover, { SuggestItem } from "./MentionPopover";
 import EmojiPicker from "./EmojiPicker";
 

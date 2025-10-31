@@ -12,7 +12,7 @@ import ReadBy from "./ReadBy";
 import FilesPanel from "./FilesPanel";
 import LinkPreview, { extractUrls } from "./LinkPreview";
 import { useToast } from "@/components/ui/Toast";
-import type { PresenceState } from "@/store/chat";
+import type { PresenceState } from "@/types/chat";
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return <div className="px-3 py-2 font-semibold border-b border-border">{children}</div>;
@@ -297,7 +297,7 @@ export default function ChatRightPanel() {
 
   return (
     <>
-      <div className="h-full flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="px-3 py-2 border-b border-border flex items-center gap-2">
           <button
               className={`px-2 py-1 text-xs rounded border ${tab==='friends'?'bg-subtle/60 border-border':'border-transparent hover:border-border'}`}

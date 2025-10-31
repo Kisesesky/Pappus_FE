@@ -596,7 +596,7 @@ export default function KanbanView() {
   ];
 
   return (
-    <div className="h-full overflow-x-auto p-4">
+    <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-4">
         <div className="flex flex-col gap-4 rounded-3xl border border-border bg-panel/60 p-4 shadow-sm backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

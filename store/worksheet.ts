@@ -2,46 +2,30 @@
 
 import { create } from 'zustand';
 import { lsGet, lsSet } from '@/lib/persist';
+import type {
+  WorksheetStatus,
+  WorksheetColumnType,
+  WorksheetColumn,
+  WorksheetCell,
+  WorksheetRow,
+  Worksheet,
+  WorksheetMeta,
+} from '@/types/worksheet';
+import {
+  createDefaultWorksheets,
+  createDefaultWorksheetMeta,
+  createDefaultWorksheetMap,
+} from '@/lib/mocks/worksheet';
 
-export type WorksheetStatus = 'draft' | 'in-review' | 'done';
-
-export type WorksheetColumnType = 'text' | 'number' | 'date' | 'select';
-
-export type WorksheetColumn = {
-  id: string;
-  title: string;
-  type: WorksheetColumnType;
-  options?: string[];
-  width?: number;
-};
-
-export type WorksheetCell = {
-  columnId: string;
-  value: string | number | null;
-};
-
-export type WorksheetRow = {
-  id: string;
-  cells: WorksheetCell[];
-  assignee?: string;
-  status?: WorksheetStatus;
-  memo?: string;
-  updatedAt: number;
-};
-
-export type Worksheet = {
-  id: string;
-  title: string;
-  ownerName: string;
-  updatedAt: number;
-  status: WorksheetStatus;
-  columns: WorksheetColumn[];
-  rows: WorksheetRow[];
-  tags?: string[];
-  description?: string;
-};
-
-export type WorksheetMeta = Pick<Worksheet, 'id' | 'title' | 'ownerName' | 'updatedAt' | 'status'>;
+export type {
+  WorksheetStatus,
+  WorksheetColumnType,
+  WorksheetColumn,
+  WorksheetCell,
+  WorksheetRow,
+  Worksheet,
+  WorksheetMeta,
+} from '@/types/worksheet';
 
 type WorksheetStore = {
   worksheets: WorksheetMeta[];
@@ -76,110 +60,13 @@ function upsertMeta(list: WorksheetMeta[], next: WorksheetMeta): WorksheetMeta[]
   return copy.sort((a, b) => b.updatedAt - a.updatedAt);
 }
 
-const DEFAULT_WORKSHEETS: Worksheet[] = [
-  {
-    id: 'ws-001',
-    title: 'Launch Checklist',
-    ownerName: 'Alice',
-    updatedAt: Date.now() - 1000 * 60 * 60 * 5,
-    status: 'in-review',
-    columns: [
-      { id: 'col-title', title: 'Task', type: 'text' },
-      { id: 'col-owner', title: 'Owner', type: 'text' },
-      { id: 'col-status', title: 'Status', type: 'select', options: ['Pending', 'In Progress', 'Done'] },
-      { id: 'col-due', title: 'Due Date', type: 'date' },
-    ],
-    rows: [
-      {
-        id: 'row-1',
-        updatedAt: Date.now() - 1000 * 60 * 60 * 5,
-        cells: [
-          { columnId: 'col-title', value: 'QA sign-off' },
-          { columnId: 'col-owner', value: 'Bob' },
-          { columnId: 'col-status', value: 'In Progress' },
-          { columnId: 'col-due', value: '2025-10-30' },
-        ],
-      },
-      {
-        id: 'row-2',
-        updatedAt: Date.now() - 1000 * 60 * 60 * 8,
-        cells: [
-          { columnId: 'col-title', value: 'Release notes' },
-          { columnId: 'col-owner', value: 'You' },
-          { columnId: 'col-status', value: 'Pending' },
-          { columnId: 'col-due', value: '2025-10-31' },
-        ],
-      },
-    ],
-    tags: ['launch', 'checklist'],
-    description: 'Tasks to complete before the release freeze.',
-  },
-  {
-    id: 'ws-002',
-    title: 'Customer Success Plans',
-    ownerName: 'Bob',
-    updatedAt: Date.now() - 1000 * 60 * 60 * 24,
-    status: 'done',
-    columns: [
-      { id: 'col-account', title: 'Account', type: 'text' },
-      { id: 'col-owner', title: 'Owner', type: 'text' },
-      { id: 'col-health', title: 'Health', type: 'select', options: ['Green', 'Yellow', 'Red'] },
-      { id: 'col-renewal', title: 'Renewal', type: 'date' },
-    ],
-    rows: [
-      {
-        id: 'row-1',
-        updatedAt: Date.now() - 1000 * 60 * 60 * 30,
-        cells: [
-          { columnId: 'col-account', value: 'Acme Inc.' },
-          { columnId: 'col-owner', value: 'Alice' },
-          { columnId: 'col-health', value: 'Green' },
-          { columnId: 'col-renewal', value: '2025-12-01' },
-        ],
-      },
-      {
-        id: 'row-2',
-        updatedAt: Date.now() - 1000 * 60 * 60 * 20,
-        cells: [
-          { columnId: 'col-account', value: 'Globex' },
-          { columnId: 'col-owner', value: 'You' },
-          { columnId: 'col-health', value: 'Yellow' },
-          { columnId: 'col-renewal', value: '2026-01-12' },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'ws-003',
-    title: 'Experiment Tracker',
-    ownerName: 'You',
-    updatedAt: Date.now() - 1000 * 60 * 30,
-    status: 'draft',
-    columns: [
-      { id: 'col-exp', title: 'Experiment', type: 'text' },
-      { id: 'col-hypothesis', title: 'Hypothesis', type: 'text' },
-      { id: 'col-result', title: 'Result', type: 'select', options: ['Pending', 'Positive', 'Negative'] },
-      { id: 'col-created', title: 'Created', type: 'date' },
-    ],
-    rows: [],
-  },
-];
-
-const DEFAULT_META: WorksheetMeta[] = DEFAULT_WORKSHEETS.map(({ id, title, ownerName, updatedAt, status }) => ({
-  id,
-  title,
-  ownerName,
-  updatedAt,
-  status,
-}));
+const DEFAULT_WORKSHEETS = createDefaultWorksheets();
+const DEFAULT_META = createDefaultWorksheetMeta(DEFAULT_WORKSHEETS);
 
 const initialMeta = lsGet<WorksheetMeta[]>(META_KEY, DEFAULT_META);
 const initialMap = lsGet<Record<string, Worksheet>>(
   DATA_KEY,
-  DEFAULT_WORKSHEETS.reduce<Record<string, Worksheet>>((acc, worksheet) => {
-    acc[worksheet.id] = worksheet;
-    return acc;
-  }, {}),
+  createDefaultWorksheetMap(DEFAULT_WORKSHEETS),
 );
 const initialActive = lsGet<string | null>(ACTIVE_KEY, initialMeta[0]?.id ?? null);
 
@@ -425,3 +312,4 @@ export const useWorksheet = create<WorksheetStore>((set, get) => ({
     });
   },
 }));
+

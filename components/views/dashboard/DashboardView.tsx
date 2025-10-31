@@ -22,7 +22,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
 import { useChat } from '@/store/chat';
-import type { Channel } from '@/store/chat';
+import type { Channel } from '@/types/chat';
 import { listIssues, type Issue } from '@/lib/api';
 import Button from '@/components/ui/button';
 
@@ -1091,8 +1091,8 @@ export default function DashboardView({
   const visibleWidgets = widgets.filter((widget) => widget.visible);
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-background">
-      <div className="mx-auto flex h-full max-w-6xl flex-col gap-8 px-4 py-8 lg:px-10">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 lg:px-10">
         <section className="relative overflow-hidden rounded-2xl border border-border bg-panel px-6 py-8 shadow-sm">
           {heroOverlayStyle ? (
             <div className="absolute inset-0 opacity-25" style={heroOverlayStyle} />

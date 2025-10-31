@@ -908,7 +908,7 @@ useEffect(() => {
 
   return (
     <DocEditorProvider editor={editor}>
-      <div className="h-full flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
       <div className="h-14 px-3 sm:px-4 border-b border-border flex items-center justify-between bg-panel/70 backdrop-blur-sm">
           <div className="flex items-center gap-4">
             <div>

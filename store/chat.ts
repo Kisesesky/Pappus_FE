@@ -1,70 +1,45 @@
 // store/chat.ts
 import { create } from "zustand";
 import { lsGet, lsSet } from "@/lib/persist";
+import {
+  DEFAULT_WORKSPACE_ID,
+  DEFAULT_WORKSPACE_NAME,
+  DEFAULT_STARRED_SECTION_ID,
+  DEFAULT_CHANNEL_SECTION_ID,
+  DEFAULT_DM_SECTION_ID,
+  defaultChannels,
+  defaultChannelMembers,
+  defaultChannelTopics,
+  createDefaultMessages,
+  createDefaultWorkspace,
+} from "@/lib/mocks/chat";
 
-/** ---------------- Types ---------------- */
-export type Attachment = {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  dataUrl?: string;
-};
-
-export type ReactionMap = Record<string, string[]>;
-
-export type Msg = {
-  id: string;
-  author: string;
-  authorId: string;
-  text: string;
-  ts: number;
-  editedAt?: number;
-  channelId: string;
-  attachments?: Attachment[];
-  parentId?: string | null;
-  threadCount?: number;
-  reactions?: ReactionMap;
-  mentions?: string[];
-  seenBy?: string[];
-};
-
-export type Channel = {
-  id: string;
-  name: string;
-  workspaceId: string;
-  isDM?: boolean;
-};
-
-export type WorkspaceSectionType = "starred" | "channels" | "dms" | "custom";
-
-export type WorkspaceSection = {
-  id: string;
-  title: string;
-  type: WorkspaceSectionType;
-  itemIds: string[];
-  collapsed?: boolean;
-  icon?: string;
-};
-
-export type Workspace = {
-  id: string;
-  name: string;
-  icon?: string;
-  sections: WorkspaceSection[];
-};
-
-export type FileItem = { id: string; name: string; size: number; type: string; blob: File; previewUrl?: string };
-
-export type ChannelActivity = {
-  lastMessageTs: number;
-  lastAuthor?: string;
-  lastPreview?: string;
-  unreadCount: number;
-  mentionCount: number;
-};
-
-export type PresenceState = "online" | "away" | "busy" | "offline";
+import type {
+  Attachment,
+  ReactionMap,
+  Msg,
+  Channel,
+  WorkspaceSectionType,
+  WorkspaceSection,
+  Workspace,
+  FileItem,
+  ChannelActivity,
+  PresenceState,
+  ChatUser,
+} from "@/types/chat";
+export type {
+  Attachment,
+  ReactionMap,
+  Msg,
+  Channel,
+  WorkspaceSectionType,
+  WorkspaceSection,
+  Workspace,
+  FileItem,
+  ChannelActivity,
+  PresenceState,
+  ChatUser,
+} from "@/types/chat";
 
 type HuddleState = {
   active: boolean;
@@ -73,11 +48,9 @@ type HuddleState = {
   members?: string[];
 };
 
-type User = { id: string; name: string };
-
 type State = {
-  me: User;
-  users: Record<string, User>;
+  me: ChatUser;
+  users: Record<string, ChatUser>;
   userStatus: Record<string, PresenceState>;
 
   workspaceId: string;
@@ -160,11 +133,14 @@ const STATUS_KEY = "fd.chat.status";
 const LAST_READ_KEY = "fd.chat.lastRead";
 const ACTIVITY_KEY = "fd.chat.activity";
 
-const DEFAULT_WORKSPACE_ID = "ws-default";
-const DEFAULT_WORKSPACE_NAME = "Acme";
-const DEFAULT_STARRED_SECTION_ID = "sec-starred";
-const DEFAULT_CHANNEL_SECTION_ID = "sec-channels";
-const DEFAULT_DM_SECTION_ID = "sec-dms";
+function cloneMembers(map: Record<string, string[]>): Record<string, string[]> {
+  return Object.fromEntries(Object.entries(map).map(([key, value]) => [key, [...value]]));
+}
+
+function cloneTopics(map: Record<string, { topic: string; muted?: boolean }>): Record<string, { topic: string; muted?: boolean }> {
+  return Object.fromEntries(Object.entries(map).map(([key, value]) => [key, { ...value }]));
+}
+
 let bc: BroadcastChannel | null = null;
 
 /** ---------------- Seed ---------------- */
@@ -176,22 +152,21 @@ function ensureSeed() {
   const status = lsGet<Record<string,PresenceState>>(STATUS_KEY, {});
 
   if (channels.length === 0) {
-    channels = [
-      { id: "general", name: "# general", workspaceId: DEFAULT_WORKSPACE_ID },
-      { id: "random",  name: "# random",  workspaceId: DEFAULT_WORKSPACE_ID },
-    ];
+    channels = defaultChannels.map(channel => ({ ...channel }));
     lsSet(CHANNELS_KEY, channels);
 
-    const now = Date.now();
-    lsSet(MSGS_KEY("general"), [
-      { id: "1", channelId: "general", author: "Alice", authorId: "u-alice", text: "Welcome to #general!", ts: now,   seenBy: ["u-alice"] },
-      { id: "2", channelId: "general", author: "Bob",   authorId: "u-bob",   text: "프론트만으로 로컬 퍼시스트 👍 https://flowdash.dev/demo", ts: now + 5000, seenBy: ["u-bob"] },
-      { id: "3", channelId: "general", author: "Alice", authorId: "u-alice", text: "```ts\nexport const add = (a:number,b:number)=>a+b\n```", ts: now + 9000, seenBy: ["u-alice"] },
-    ]);
-    lsSet(MSGS_KEY("random"), []);
+    const seededMessages = createDefaultMessages(Date.now());
+    Object.entries(seededMessages).forEach(([channelId, messages]) => {
+      lsSet(MSGS_KEY(channelId), messages);
+    });
+    channels.forEach(channel => {
+      if (!seededMessages[channel.id]) {
+        lsSet(MSGS_KEY(channel.id), []);
+      }
+    });
     lsSet(PINS_KEY, {} as Record<string, string[]>);
-    lsSet(MEMBERS_KEY, { general: ["u-you","u-alice","u-bob"], random: ["u-you","u-alice","u-bob"] });
-    lsSet(TOPICS_KEY, { general: { topic: "팀 공지 & 전체 토론" }, random: { topic: "잡담/밈/휴식" } });
+    lsSet(MEMBERS_KEY, cloneMembers(defaultChannelMembers));
+    lsSet(TOPICS_KEY, cloneTopics(defaultChannelTopics));
   } else if (channels.some(c => !c.workspaceId)) {
     const fallbackWorkspace = workspaces[0]?.id || DEFAULT_WORKSPACE_ID;
     channels = channels.map(c => ({
@@ -202,18 +177,7 @@ function ensureSeed() {
   }
 
   if (workspaces.length === 0) {
-    const sectionChannels = channels
-      .filter(c => !c.isDM && c.workspaceId === DEFAULT_WORKSPACE_ID)
-      .map(c => c.id);
-    workspaces = [{
-      id: DEFAULT_WORKSPACE_ID,
-      name: DEFAULT_WORKSPACE_NAME,
-      sections: [
-        { id: DEFAULT_STARRED_SECTION_ID, title: "Starred", type: "starred", itemIds: [], collapsed: false },
-        { id: DEFAULT_CHANNEL_SECTION_ID, title: "Channels", type: "channels", itemIds: sectionChannels, collapsed: false },
-        { id: DEFAULT_DM_SECTION_ID, title: "Direct Messages", type: "dms", itemIds: [], collapsed: false },
-      ]
-    }];
+    workspaces = [createDefaultWorkspace(channels)];
   } else {
     const byWorkspace = new Map<string, Channel[]>();
     for (const ch of channels) {
@@ -243,10 +207,10 @@ function ensureSeed() {
   }
 
   if (Object.keys(members).length === 0) {
-    lsSet(MEMBERS_KEY, { general: ["u-you","u-alice","u-bob"], random: ["u-you","u-alice","u-bob"] });
+    lsSet(MEMBERS_KEY, cloneMembers(defaultChannelMembers));
   }
   if (Object.keys(topics).length === 0) {
-    lsSet(TOPICS_KEY, { general: { topic: "팀 공지 & 전체 토론" }, random: { topic: "잡담/밈/휴식" } });
+    lsSet(TOPICS_KEY, cloneTopics(defaultChannelTopics));
   }
   if (Object.keys(status).length === 0) {
     lsSet(STATUS_KEY, { "u-you": "online", "u-alice": "online", "u-bob": "away" });
@@ -1047,4 +1011,5 @@ export const useChat = create<State>((set, get) => ({
     }
   },
 }));
+
 

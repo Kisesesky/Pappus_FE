@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
-import type { Attachment, Msg } from '@/store/chat';
+import type { Attachment, Msg } from '@/types/chat';
 import MarkdownText from '@/components/chat/MarkdownText';
 import EmojiPicker from '@/components/chat/EmojiPicker';
 import ReactionBar from '@/components/chat/ReactionBar';
