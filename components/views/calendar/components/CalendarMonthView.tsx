@@ -13,7 +13,7 @@ type CalendarMonthViewProps = {
   calendarMap: Map<string, CalendarSource>;
   maxVisible?: number;
   onSelectDate: (date: Date) => void;
-  onOpenDrawer: (date: Date) => void;
+  onRequestDetails?: (date: Date) => void;
 };
 
 export function CalendarMonthView({
@@ -24,7 +24,7 @@ export function CalendarMonthView({
   calendarMap,
   maxVisible = 2,
   onSelectDate,
-  onOpenDrawer,
+  onRequestDetails,
 }: CalendarMonthViewProps) {
   return (
     <div className="flex h-full flex-col rounded-xl border border-border bg-panel shadow-sm">
@@ -42,7 +42,7 @@ export function CalendarMonthView({
         ))}
       </div>
 
-      <div className="grid flex-1 grid-cols-7 auto-rows-[minmax(0,1fr)]">
+      <div className="grid flex-1 grid-cols-7 auto-rows-[minmax(50px,1fr)]">
         {days.map((date) => {
           const key = format(date, "yyyy-MM-dd");
           const dayEvents = eventsByDate.get(key) ?? [];
@@ -56,12 +56,14 @@ export function CalendarMonthView({
             <button
               key={key}
               type="button"
-              onClick={() => onSelectDate(date)}
-              onDoubleClick={() => onOpenDrawer(date)}
+              onClick={() => {
+                onSelectDate(date);
+                onRequestDetails?.(date);
+              }}
               className={cn(
-                "relative flex h-full flex-col gap-1 border-r border-b border-border/60 px-2 py-1 text-left transition hover:bg-subtle/50 focus-visible:ring-2 focus-visible:ring-brand/50",
-                !isCurrentMonth && "bg-zinc-200/40 text-zinc-500 dark:bg-zinc-800/40 dark:text-zinc-500",
-                isSelected && "ring-2 ring-brand/40",
+                "relative flex h-full flex-col gap-1 border border-border/20 px-2 py-1 text-left transition hover:bg-subtle/50 focus-visible:ring-2 focus-visible:ring-brand/50",
+                !isCurrentMonth && "bg-zinc-200/30 text-zinc-500 dark:bg-zinc-800/30 dark:text-zinc-500",
+                isSelected && "border-brand/40 ring-2 ring-brand/40",
               )}
             >
               <div

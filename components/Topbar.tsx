@@ -1,5 +1,6 @@
 // components/Topbar.tsx
 'use client';
+import Image from "next/image";
 import { useToast } from "@/components/ui/Toast";
 import { Bell, Info, Menu, Search } from "lucide-react";
 import CommandPalette from "./command/CommandPalette";
@@ -18,11 +19,16 @@ export default function Topbar() {
       </button>
 
       <div className="hidden items-center gap-3 md:flex">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-sidebar-primary/90 text-sidebar-primary-foreground text-sm font-semibold">
-          FD
-        </div>
+        <Image
+          src="/logo.png"
+          alt="AndUp logo"
+          width={40}
+          height={40}
+          className="h-10 w-10 rounded-md object-cover"
+          priority
+        />
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold text-foreground">Flowdash</span>
+          <span className="text-sm font-semibold text-foreground">AnDup</span>
           <span className="text-[11px] uppercase tracking-[0.12em] text-muted">Product Ops Workspace</span>
         </div>
       </div>

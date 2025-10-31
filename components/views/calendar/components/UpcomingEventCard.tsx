@@ -1,7 +1,8 @@
 "use client";
 
-import { format, parseISO } from "date-fns";
-import { Clock, MapPin, Trash } from "lucide-react";
+import { format, isSameDay, parseISO } from "date-fns";
+import { ko } from "date-fns/locale";
+import { CalendarDays, Clock, MapPin, StickyNote, Trash } from "lucide-react";
 
 import { formatEventTime } from "@/lib/calendar/utils";
 import type { CalendarEvent } from "@/types/calendar";
@@ -11,15 +12,41 @@ type UpcomingEventCardProps = {
   calendarName?: string;
   color?: string;
   onDelete: (id: string) => void;
+  compact?: boolean;
 };
 
-export function UpcomingEventCard({ event, calendarName, color, onDelete }: UpcomingEventCardProps) {
+export function UpcomingEventCard({
+  event,
+  calendarName,
+  color,
+  onDelete,
+  compact = false,
+}: UpcomingEventCardProps) {
+  const containerClasses = compact
+    ? "rounded-md border border-border/50 bg-background px-3 py-2 text-xs shadow-sm"
+    : "rounded-md border border-border/60 bg-background px-3 py-3 text-sm shadow-sm";
+  const titleClasses = compact
+    ? "font-semibold text-foreground/90"
+    : "text-sm font-semibold text-foreground";
+  const metaClasses = compact
+    ? "mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted"
+    : "mt-2 flex flex-wrap items-center gap-2 text-xs text-muted";
+
+  const start = parseISO(event.start);
+  const end = event.end ? parseISO(event.end) : start;
+
+  const dateLabel = isSameDay(start, end)
+    ? format(start, "M월 d일 (EEE)", { locale: ko })
+    : `${format(start, "M월 d일", { locale: ko })} ~ ${format(end, "M월 d일", { locale: ko })}`;
+
+  const timeline = formatEventTime(event.start, event.end, event.allDay);
+
   return (
-    <div className="rounded-md border border-border/60 bg-background px-3 py-2 text-sm shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
+    <div className={containerClasses}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color ?? "#2563eb" }} />
-          <span className="font-medium text-foreground/90">{event.title}</span>
+          <span className={titleClasses}>{event.title}</span>
         </div>
         <button
           type="button"
@@ -30,23 +57,30 @@ export function UpcomingEventCard({ event, calendarName, color, onDelete }: Upco
           삭제
         </button>
       </div>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted">
+
+      <div className={metaClasses}>
+        <span className="inline-flex items-center gap-1 text-foreground/70">
+          <CalendarDays size={12} />
+          {dateLabel}
+        </span>
         <span className="inline-flex items-center gap-1">
           <Clock size={12} />
-          {formatEventTime(event.start, event.end, event.allDay)}
+          {timeline}
         </span>
-        {calendarName && <span>{calendarName}</span>}
-        {!event.allDay && <span>{format(parseISO(event.start), "M월 d일 HH:mm")}</span>}
+        {calendarName && <span className="text-foreground/60">{calendarName}</span>}
+        {event.location && (
+          <span className="inline-flex items-center gap-1">
+            <MapPin size={12} />
+            {event.location}
+          </span>
+        )}
+        {event.description && (
+          <span className="inline-flex items-center gap-1">
+            <StickyNote size={12} />
+            {event.description.length > 30 ? `${event.description.slice(0, 30)}…` : event.description}
+          </span>
+        )}
       </div>
-      {event.location && (
-        <div className="mt-2 inline-flex items-center gap-1 text-xs text-muted">
-          <MapPin size={12} />
-          <span>{event.location}</span>
-        </div>
-      )}
-      {event.description && (
-        <p className="mt-2 text-xs text-muted leading-relaxed">{event.description}</p>
-      )}
     </div>
   );
 }

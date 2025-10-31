@@ -23,7 +23,8 @@ const EVENT_STORAGE_KEY = "fd.calendar.events";
 const createDraft = (date: string, calendarId?: string): EventDraft => ({
   title: "",
   calendarId: calendarId ?? "",
-  date,
+  startDate: date,
+  endDate: date,
   allDay: true,
   startTime: "09:00",
   endTime: "10:00",
@@ -42,7 +43,7 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
     readStorage(EVENT_STORAGE_KEY, DEFAULT_EVENTS),
   );
   const [searchTerm, setSearchTerm] = useState("");
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [draft, setDraft] = useState<EventDraft>(() =>
     createDraft(toDateKey(initialDate), DEFAULT_CALENDARS[0]?.id),
@@ -61,7 +62,7 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
 
   useEffect(() => {
     if (!calendars.some((calendar) => calendar.id === draft.calendarId)) {
-      setDraft((prev) => createDraft(prev.date, calendars[0]?.id));
+      setDraft((prev) => createDraft(prev.startDate, calendars[0]?.id));
     }
   }, [calendars, draft.calendarId]);
 
@@ -140,12 +141,12 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
     setNewCalendarColor(COLOR_PALETTE[nextIndex] ?? COLOR_PALETTE[0] ?? "#0c66e4");
   };
 
-  const openDrawer = (date: Date) => {
+  const openForm = (date: Date) => {
     const dateKey = toDateKey(date);
     const fallback = calendars.find((calendar) => calendar.visible)?.id ?? calendars[0]?.id ?? "";
     setDraft(createDraft(dateKey, fallback));
     setFormError(null);
-    setDrawerOpen(true);
+    setIsFormOpen(true);
     setSelectedDate(date);
   };
 
@@ -159,11 +160,30 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
       return;
     }
 
-    const start = draft.allDay ? `${draft.date}T00:00:00` : `${draft.date}T${draft.startTime}:00`;
-    const end = draft.allDay ? `${draft.date}T23:59:00` : `${draft.date}T${draft.endTime}:00`;
+    const startDate = draft.startDate;
+    const endDate = draft.endDate || draft.startDate;
 
-    if (!draft.allDay && parseISO(end) <= parseISO(start)) {
-      setFormError("종료 시간이 시작 시간 이후여야 합니다.");
+    if (parseISO(endDate) < parseISO(startDate)) {
+      setFormError("종료 날짜는 시작 날짜 이후여야 합니다.");
+      return;
+    }
+
+    if (!draft.allDay) {
+      if (!draft.startTime || !draft.endTime) {
+        setFormError("시작/종료 시간을 입력해주세요.");
+        return;
+      }
+    }
+
+    const startIso = draft.allDay
+      ? `${startDate}T00:00:00`
+      : `${startDate}T${draft.startTime}:00`;
+    const endIso = draft.allDay
+      ? `${endDate}T23:59:00`
+      : `${endDate}T${draft.endTime}:00`;
+
+    if (parseISO(endIso) <= parseISO(startIso)) {
+      setFormError(draft.allDay ? "종료 날짜를 다시 확인해주세요." : "종료 시간은 시작 이후여야 합니다.");
       return;
     }
 
@@ -171,19 +191,18 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
       id: crypto.randomUUID?.() ?? `event-${Date.now()}`,
       calendarId: draft.calendarId,
       title: draft.title.trim(),
-      start,
-      end,
+      start: startIso,
+      end: endIso,
       allDay: draft.allDay,
       location: draft.location.trim() || undefined,
       description: draft.description.trim() || undefined,
     };
 
     setEvents((prev) => [...prev, newEvent]);
-    setSelectedDate(parseISO(start));
-    setDrawerOpen(false);
+    setSelectedDate(parseISO(startIso));
+    setIsFormOpen(false);
     setFormError(null);
   };
-
   const handleDeleteEvent = (id: string) => {
     setEvents((prev) => prev.filter((event) => event.id !== id));
   };
@@ -200,8 +219,8 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
     setEvents,
     searchTerm,
     setSearchTerm,
-    drawerOpen,
-    setDrawerOpen,
+    isFormOpen,
+    setIsFormOpen,
     formError,
     setFormError,
     draft,
@@ -222,7 +241,7 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
     goToday,
     handleToggleCalendar,
     handleAddCalendar,
-    openDrawer,
+    openForm,
     handleCreateEvent,
     handleDeleteEvent,
   };

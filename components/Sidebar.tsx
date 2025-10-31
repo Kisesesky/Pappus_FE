@@ -425,8 +425,8 @@ export default function Sidebar() {
     <div className="flex min-h-0 w-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="border-b border-sidebar-border px-3 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sidebar-primary/90 text-sidebar-primary-foreground font-semibold">
-            FD
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sky-500 text-white font-semibold shadow-sm">
+            WS
           </div>
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.1em] text-muted">Workspace</div>

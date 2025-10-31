@@ -10,7 +10,7 @@ type AgendaViewProps = {
   selectedDate: Date;
   events: CalendarEvent[];
   calendarMap: Map<string, CalendarSource>;
-  onOpenDrawer: (date: Date) => void;
+  onRequestCreate: (date: Date) => void;
   onDeleteEvent: (id: string) => void;
 };
 
@@ -18,7 +18,7 @@ export function AgendaView({
   selectedDate,
   events,
   calendarMap,
-  onOpenDrawer,
+  onRequestCreate,
   onDeleteEvent,
 }: AgendaViewProps) {
   return (
@@ -32,7 +32,7 @@ export function AgendaView({
         </div>
         <button
           type="button"
-          onClick={() => onOpenDrawer(selectedDate)}
+          onClick={() => onRequestCreate(selectedDate)}
           className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm transition hover:bg-subtle/60"
         >
           새 일정

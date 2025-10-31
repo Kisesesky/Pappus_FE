@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "DEUL-bit - Illuminate your team’s natural flow.",
+  title: "AnDup - Add more. Go up. andup.",
   description: "workpage"
 };
 

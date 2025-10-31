@@ -16,6 +16,8 @@ bun dev
 /
 ├─ app/                            # Next.js App Router 루트 (페이지 라우팅)
 │   ├─ api/                        ├─ # 서버 API 라우트 디렉터리
+│   │   ├─ calendar/               │  ├─ # 달력 관련 API 라우트 
+│   │   │   └─ calendar.ts         │  │  └─ # calendar API 엔드포인트 구현
 │   │   ├─ channels/               │  ├─ # 채널 관련 API 라우트 (예: 채널 목록, 생성, 수정)
 │   │   │   └─ route.ts            │  │  └─ # channels API 엔드포인트 구현
 │   │   └─ messages/               │  ├─ # 메시지 관련 API 라우트
@@ -94,8 +96,22 @@ bun dev
 │   │   └─ Toast.tsx               │  └─ # 토스트 알림 컴포넌트
 │   ├─ views/                      ├─ # 페이지별 핵심 뷰 컴포넌트 모음 (각 기능별 주 뷰)
 │   │   ├─ calendar/               │  ├─ # 캘린더 뷰 컴포넌트 모음
+│   │   │   ├─ components/         │  │  ├─ # 
+│   │   │   │   ├─ AgendaView.tsx  │  │  │  ├─ # 
+│   │   │   │   ├─ CalendarModal   │  │  │  ├─ # 
+│   │   │   │   ├─ CalendarPanel   │  │  │  ├─ # 
+│   │   │   │   ├─ CalendarHeader  │  │  │  ├─ # 
+│   │   │   │   ├─ CalendarMonth   │  │  │  ├─ # 
+│   │   │   │   ├─ CalendarSidebar │  │  │  ├─ # 
+│   │   │   │   ├─ DayEventPill.tsx│  │  │  ├─ # 
+│   │   │   │   └─ EventCard.tsx   │  │  │  └─ # 
+│   │   │   ├─ hooks/              │  │  ├─ # 
+│   │   │   │   └─                 │  │  │  └─ # 
 │   │   │   └─ CalendarView.tsx    │  │  └─ # 캘린더 주 뷰 컴포넌트
 │   │   ├─ chat/                   │  ├─ # 채팅 뷰 컴포넌트 모음
+│   │   │   ├─ hooks/              │  │  ├─ # 
+│   │   │   │   ├─                 │  │  │  ├─ # 
+│   │   │   │   └─                 │  │  │  └─ # 
 │   │   │   └─ ChatView.tsx        │  │  └─ # 채팅 주 뷰 컴포넌트
 │   │   ├─ dashboard/              │  ├─ # 대시보드 뷰 컴포넌트 모음
 │   │   │   └─ DashboardView.tsx   │  │  └─ # 대시보드 주 뷰 컴포넌트
@@ -116,6 +132,12 @@ bun dev
 │   └─ ...                          └─ # 상세문서는 직접 읽을수 있도록
 │
 ├─ lib/                            # 각종 유틸리티 및 헬퍼 함수 모음
+│   ├─ calendar/                   ├─ # 
+│   │   └─ utils.ts                │  └─ # 
+│   ├─ mocks/                      ├─ # 
+│   │   ├─ calenar.ts              │  ├─ # 
+│   │   ├─ chat.ts                 │  ├─ # 
+│   │   └─ worksheet.ts            │  └─ # 
 │   ├─ api.ts                      ├─ # API 호출 함수 모음
 │   ├─ commands.ts                 ├─ # 명령 관련 헬퍼 및 함수
 │   ├─ kanbanHistory.ts            ├─ # Kanban 보드 히스토리 처리 관련 함수
@@ -134,8 +156,11 @@ bun dev
 │   └─ chat.ts                     └─ # 채팅 상태 관리 스토어
 │
 ├─ types/                          # TypeScript 타입 선언 모음
+│   ├─ calendar.ts                 ├─ # 
+│   ├─ chat.ts                     ├─ # 
 │   ├─ global.d.ts                 ├─ # 전역 타입 선언 및 모듈 선언
-│   └─ tiptap-table.d.ts           └─ # TipTap 테이블 관련 타입 선언
+│   ├─ tiptap-table.d.ts           ├─ # TipTap 테이블 관련 타입 선언
+│   └─ worksheet.ts                └─ # 
 │
 ├─ tailwind.config.ts              # Tailwind CSS 설정 파일 (다크 테마 및 커스텀 설정)
 ├─ postcss.config.js               # PostCSS 설정 파일
