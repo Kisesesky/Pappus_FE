@@ -2,7 +2,7 @@
 
 import { format, isSameDay, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
-import { CalendarDays, Clock, MapPin, StickyNote, Trash } from "lucide-react";
+import { CalendarDays, Clock, MapPin, Pencil, StickyNote, Trash } from "lucide-react";
 
 import { formatEventTime } from "@/lib/calendar/utils";
 import type { CalendarEvent } from "@/types/calendar";
@@ -12,6 +12,7 @@ type UpcomingEventCardProps = {
   calendarName?: string;
   color?: string;
   onDelete: (id: string) => void;
+  onEdit?: (event: CalendarEvent) => void;
   compact?: boolean;
 };
 
@@ -20,6 +21,7 @@ export function UpcomingEventCard({
   calendarName,
   color,
   onDelete,
+  onEdit,
   compact = false,
 }: UpcomingEventCardProps) {
   const containerClasses = compact
@@ -29,8 +31,8 @@ export function UpcomingEventCard({
     ? "font-semibold text-foreground/90"
     : "text-sm font-semibold text-foreground";
   const metaClasses = compact
-    ? "mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted"
-    : "mt-2 flex flex-wrap items-center gap-2 text-xs text-muted";
+    ? "mt-1 flex flex-wrap items-center gap-3 text-[11px] text-muted"
+    : "mt-2 flex flex-wrap items-center gap-3 text-xs text-muted text-foreground/70";
 
   const start = parseISO(event.start);
   const end = event.end ? parseISO(event.end) : start;
@@ -48,18 +50,30 @@ export function UpcomingEventCard({
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color ?? "#2563eb" }} />
           <span className={titleClasses}>{event.title}</span>
         </div>
-        <button
-          type="button"
-          onClick={() => onDelete(event.id)}
-          className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-muted hover:bg-subtle/60"
-        >
-          <Trash size={12} />
-          삭제
-        </button>
+        <div className="flex items-center gap-1">
+          {onEdit && !compact && (
+            <button
+              type="button"
+              onClick={() => onEdit(event)}
+              className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-muted hover:bg-subtle/60"
+            >
+              <Pencil size={12} />
+              편집
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onDelete(event.id)}
+            className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-[11px] text-muted hover:bg-subtle/60"
+          >
+            <Trash size={12} />
+            삭제
+          </button>
+        </div>
       </div>
 
       <div className={metaClasses}>
-        <span className="inline-flex items-center gap-1 text-foreground/70">
+        <span className="inline-flex items-center gap-1">
           <CalendarDays size={12} />
           {dateLabel}
         </span>

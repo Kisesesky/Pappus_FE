@@ -1,4 +1,4 @@
-export type ViewMode = "month" | "agenda";
+export type ViewMode = "agenda" | "month" | "timeline";
 
 export type CalendarSource = {
   id: string;

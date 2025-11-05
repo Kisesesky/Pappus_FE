@@ -4,6 +4,7 @@ import {
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
+  format,
   isAfter,
   parseISO,
   startOfDay,
@@ -48,6 +49,7 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
   const [draft, setDraft] = useState<EventDraft>(() =>
     createDraft(toDateKey(initialDate), DEFAULT_CALENDARS[0]?.id),
   );
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [showCalendarForm, setShowCalendarForm] = useState(false);
   const [newCalendarName, setNewCalendarName] = useState("");
   const [newCalendarColor, setNewCalendarColor] = useState<string>(COLOR_PALETTE[0] ?? "#0c66e4");
@@ -141,16 +143,48 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
     setNewCalendarColor(COLOR_PALETTE[nextIndex] ?? COLOR_PALETTE[0] ?? "#0c66e4");
   };
 
+  const handleUpdateCalendar = (id: string, patch: Partial<CalendarSource>) => {
+    setCalendars((prev) =>
+      prev.map((calendar) => (calendar.id === id ? { ...calendar, ...patch } : calendar)),
+    );
+  };
+
+  const handleDeleteCalendar = (id: string) => {
+    setCalendars((prev) => prev.filter((calendar) => calendar.id !== id));
+    setEvents((prev) => prev.filter((event) => event.calendarId !== id));
+  };
+
   const openForm = (date: Date) => {
     const dateKey = toDateKey(date);
     const fallback = calendars.find((calendar) => calendar.visible)?.id ?? calendars[0]?.id ?? "";
     setDraft(createDraft(dateKey, fallback));
     setFormError(null);
+    setEditingEventId(null);
     setIsFormOpen(true);
     setSelectedDate(date);
   };
 
-  const handleCreateEvent = () => {
+  const openEditForm = (event: CalendarEvent) => {
+    const start = parseISO(event.start);
+    const end = event.end ? parseISO(event.end) : start;
+    setDraft({
+      title: event.title,
+      calendarId: event.calendarId,
+      startDate: toDateKey(start),
+      endDate: toDateKey(end),
+      allDay: event.allDay,
+      startTime: event.allDay ? "09:00" : format(start, "HH:mm"),
+      endTime: event.allDay ? "10:00" : format(end, "HH:mm"),
+      location: event.location ?? "",
+      description: event.description ?? "",
+    });
+    setFormError(null);
+    setEditingEventId(event.id);
+    setIsFormOpen(true);
+    setSelectedDate(start);
+  };
+
+  const handleSubmitEvent = () => {
     if (!draft.title.trim()) {
       setFormError("제목을 입력해주세요.");
       return;
@@ -187,8 +221,7 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
       return;
     }
 
-    const newEvent: CalendarEvent = {
-      id: crypto.randomUUID?.() ?? `event-${Date.now()}`,
+    const updatedFields = {
       calendarId: draft.calendarId,
       title: draft.title.trim(),
       start: startIso,
@@ -198,13 +231,30 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
       description: draft.description.trim() || undefined,
     };
 
-    setEvents((prev) => [...prev, newEvent]);
+    if (editingEventId) {
+      setEvents((prev) =>
+        prev.map((event) => (event.id === editingEventId ? { ...event, ...updatedFields } : event)),
+      );
+    } else {
+      const newEvent: CalendarEvent = {
+        id: crypto.randomUUID?.() ?? `event-${Date.now()}`,
+        ...updatedFields,
+      };
+      setEvents((prev) => [...prev, newEvent]);
+    }
     setSelectedDate(parseISO(startIso));
     setIsFormOpen(false);
     setFormError(null);
+    setEditingEventId(null);
   };
   const handleDeleteEvent = (id: string) => {
     setEvents((prev) => prev.filter((event) => event.id !== id));
+    setEditingEventId((currentId) => (currentId === id ? null : currentId));
+  };
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setFormError(null);
+    setEditingEventId(null);
   };
 
   return {
@@ -241,8 +291,13 @@ export function useCalendarState(initialDate: Date, initialView: ViewMode) {
     goToday,
     handleToggleCalendar,
     handleAddCalendar,
+    handleUpdateCalendar,
+    handleDeleteCalendar,
     openForm,
-    handleCreateEvent,
+    openEditForm,
+    handleSubmitEvent,
     handleDeleteEvent,
+    editingEventId,
+    closeForm,
   };
 }

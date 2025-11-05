@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useCallback, useState } from "react";
 import type { ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
 import {
   MessageSquare,
   FolderKanban,
@@ -26,7 +27,7 @@ import { useChat } from "@/store/chat";
 type NavItemProps = {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: LucideIcon;
   active?: boolean;
 };
 
@@ -52,7 +53,7 @@ const DOC_PAGE_MENU = [
 ];
 
 type ExpandableNavProps = {
-  icon: React.ComponentType<{ size?: number }>;
+  icon: LucideIcon;
   label: string;
   open: boolean;
   onToggle: () => void;

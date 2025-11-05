@@ -1,15 +1,19 @@
 "use client";
 
+import { endOfMonth, parseISO, startOfMonth } from "date-fns";
+import { useMemo, useState } from "react";
+
 import { COLOR_PALETTE } from "@/lib/mocks/calendar";
 import { toDateKey } from "@/lib/calendar/utils";
-import { useState } from "react";
 import { useCalendarState } from "./hooks/useCalendarState";
-import type { EventDraft, ViewMode } from "@/types/calendar";
+import type { CalendarEvent, EventDraft, ViewMode, CalendarSource } from "@/types/calendar";
 import { CalendarHeader } from "./components/CalendarHeader";
 import { CalendarMonthView } from "./components/CalendarMonthView";
+import { CalendarTimelineView } from "./components/CalendarTimelineView";
 import { AgendaView } from "./components/AgendaView";
 import { CalendarDetailsPanel } from "./components/CalendarDetailsPanel";
 import { CalendarCreateModal } from "./components/CalendarCreateModal";
+import { CalendarManageModal } from "./components/CalendarManageModal";
 import Drawer from "@/components/ui/Drawer";
 
 const MAX_VISIBLE_EVENTS_PER_DAY = 2;
@@ -31,11 +35,11 @@ export default function CalendarView({
     searchTerm,
     setSearchTerm,
     isFormOpen,
-    setIsFormOpen,
     formError,
     setFormError,
     draft,
     setDraft,
+    editingEventId,
     showCalendarForm,
     setShowCalendarForm,
     newCalendarName,
@@ -43,20 +47,42 @@ export default function CalendarView({
     newCalendarColor,
     setNewCalendarColor,
     calendarMap,
+    filteredEvents,
     eventsByDate,
     monthDays,
-    upcomingEvents,
     goPrev,
     goNext,
     goToday,
     handleToggleCalendar,
     handleAddCalendar,
+    handleUpdateCalendar,
+    handleDeleteCalendar,
     openForm,
-    handleCreateEvent,
+    openEditForm,
+    handleSubmitEvent,
     handleDeleteEvent,
+    closeForm,
   } = useCalendarState(initialDate, initialView);
 
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [manageOpen, setManageOpen] = useState(false);
+  const [manageCalendarId, setManageCalendarId] = useState<string | null>(null);
+  const [manageName, setManageName] = useState("");
+  const [manageColor, setManageColor] = useState("#0c66e4");
+  const [manageError, setManageError] = useState<string | null>(null);
+
+  const monthStart = useMemo(() => startOfMonth(current), [current]);
+  const monthEnd = useMemo(() => endOfMonth(current), [current]);
+
+  const agendaEvents = useMemo(
+    () =>
+      filteredEvents.filter((event) => {
+        const start = parseISO(event.start);
+        const end = event.end ? parseISO(event.end) : start;
+        return end >= monthStart && start <= monthEnd;
+      }),
+    [filteredEvents, monthStart, monthEnd],
+  );
 
   const selectedKey = toDateKey(selectedDate);
   const selectedEvents = eventsByDate.get(selectedKey) ?? [];
@@ -122,15 +148,43 @@ export default function CalendarView({
     openForm(date);
   };
 
+  const handleEditEvent = (event: CalendarEvent) => {
+    setDetailsOpen(true);
+    openEditForm(event);
+  };
+
   const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setFormError(null);
+    closeForm();
   };
 
   const handleCloseDetails = () => {
     setDetailsOpen(false);
-    setIsFormOpen(false);
-    setFormError(null);
+    closeForm();
+  };
+
+  const handleOpenManageCalendar = (calendar: CalendarSource) => {
+    setManageCalendarId(calendar.id);
+    setManageName(calendar.name);
+    setManageColor(calendar.color);
+    setManageError(null);
+    setManageOpen(true);
+  };
+
+  const handleSubmitManageCalendar = () => {
+    if (!manageCalendarId) return;
+    const nextName = manageName.trim();
+    if (!nextName) {
+      setManageError("이름을 입력해주세요.");
+      return;
+    }
+    handleUpdateCalendar(manageCalendarId, { name: nextName, color: manageColor });
+    setManageOpen(false);
+  };
+
+  const handleDeleteManageCalendar = () => {
+    if (!manageCalendarId) return;
+    handleDeleteCalendar(manageCalendarId);
+    setManageOpen(false);
   };
 
   return (
@@ -141,7 +195,6 @@ export default function CalendarView({
         searchTerm={searchTerm}
         calendars={calendars}
         calendarMap={calendarMap}
-        upcomingEvents={upcomingEvents}
         onSearch={setSearchTerm}
         onPrev={goPrev}
         onNext={goNext}
@@ -150,13 +203,22 @@ export default function CalendarView({
         onOpenCreate={() => handleOpenForm(selectedDate)}
         onToggleCalendar={handleToggleCalendar}
         onRequestNewCalendar={handleRequestNewCalendar}
-        onDeleteEvent={handleDeleteEvent}
+        onRequestManageCalendar={handleOpenManageCalendar}
       />
 
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <section className="flex min-h-0 flex-col overflow-hidden px-4 py-4">
-          <div className="flex-1 overflow-hidden">
-            {view === "month" ? (
+        <section className="flex min-h-0 flex-col overflow-auto px-4 py-4 scrollbar-thin">
+          <div className="flex-1 overflow-auto scrollbar-thin">
+            {view === "agenda" ? (
+              <AgendaView
+                current={current}
+                events={agendaEvents}
+                calendarMap={calendarMap}
+                onRequestCreate={handleOpenForm}
+                onRequestEdit={handleEditEvent}
+                onDeleteEvent={handleDeleteEvent}
+              />
+            ) : view === "month" ? (
               <CalendarMonthView
                 current={current}
                 selectedDate={selectedDate}
@@ -168,12 +230,14 @@ export default function CalendarView({
                 onRequestDetails={handleRequestDetails}
               />
             ) : (
-              <AgendaView
-                selectedDate={selectedDate}
-                events={selectedEvents}
+              <CalendarTimelineView
+                current={current}
+                events={filteredEvents}
                 calendarMap={calendarMap}
                 onRequestCreate={handleOpenForm}
-                onDeleteEvent={handleDeleteEvent}
+                onSelectDate={handleSelectDate}
+                onRequestDetails={handleRequestDetails}
+                editingEventId={editingEventId}
               />
             )}
           </div>
@@ -183,18 +247,20 @@ export default function CalendarView({
           <div className="pointer-events-none hidden md:block">
             <div className="pointer-events-auto fixed bottom-6 right-6 top-[calc(64px+16px)] z-40 w-[360px]">
               <div className="h-full overflow-hidden rounded-2xl border border-border bg-panel shadow-2xl">
-                <CalendarDetailsPanel
-                  selectedDate={selectedDate}
-                  events={selectedEvents}
-                  calendars={calendars}
-                  calendarMap={calendarMap}
+      <CalendarDetailsPanel
+        selectedDate={selectedDate}
+        events={selectedEvents}
+        calendars={calendars}
+        calendarMap={calendarMap}
                   draft={draft}
                   isFormOpen={isFormOpen}
                   formError={formError}
+                  editingEventId={editingEventId}
                   onChangeDraft={handleChangeDraft}
                   onRequestCreate={() => handleOpenForm(selectedDate)}
+                  onRequestEdit={handleEditEvent}
                   onCancelCreate={handleCloseForm}
-                  onSubmit={handleCreateEvent}
+                  onSubmit={handleSubmitEvent}
                   onDeleteEvent={handleDeleteEvent}
                   onClose={handleCloseDetails}
                 />
@@ -223,14 +289,16 @@ export default function CalendarView({
           draft={draft}
           isFormOpen={isFormOpen}
           formError={formError}
+          editingEventId={editingEventId}
           onChangeDraft={handleChangeDraft}
           onRequestCreate={() => handleOpenForm(selectedDate)}
+          onRequestEdit={handleEditEvent}
           onCancelCreate={handleCloseForm}
-          onSubmit={handleCreateEvent}
-          onDeleteEvent={handleDeleteEvent}
-          onClose={handleCloseDetails}
-        />
-      </Drawer>
+          onSubmit={handleSubmitEvent}
+        onDeleteEvent={handleDeleteEvent}
+        onClose={handleCloseDetails}
+      />
+    </Drawer>
 
       <CalendarCreateModal
         open={showCalendarForm}
@@ -240,6 +308,18 @@ export default function CalendarView({
         onChangeColor={setNewCalendarColor}
         onSubmit={handleAddCalendar}
         onCancel={handleCancelNewCalendar}
+      />
+
+      <CalendarManageModal
+        open={manageOpen}
+        name={manageName}
+        color={manageColor}
+        error={manageError}
+        onChangeName={setManageName}
+        onChangeColor={setManageColor}
+        onSubmit={handleSubmitManageCalendar}
+        onDelete={handleDeleteManageCalendar}
+        onClose={() => setManageOpen(false)}
       />
     </div>
   );

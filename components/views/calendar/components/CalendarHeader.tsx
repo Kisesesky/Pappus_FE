@@ -2,11 +2,10 @@
 
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { CalendarPlus, ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { CalendarPlus, ChevronLeft, ChevronRight, Plus, Search, Settings } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import type { CalendarEvent, CalendarSource, ViewMode } from "@/types/calendar";
-import { UpcomingEventCard } from "./UpcomingEventCard";
+import type { CalendarSource, ViewMode } from "@/types/calendar";
 
 type CalendarHeaderProps = {
   current: Date;
@@ -14,7 +13,6 @@ type CalendarHeaderProps = {
   searchTerm: string;
   calendars: CalendarSource[];
   calendarMap: Map<string, CalendarSource>;
-  upcomingEvents: CalendarEvent[];
   onSearch: (value: string) => void;
   onPrev: () => void;
   onNext: () => void;
@@ -23,7 +21,7 @@ type CalendarHeaderProps = {
   onOpenCreate: () => void;
   onToggleCalendar: (id: string) => void;
   onRequestNewCalendar: () => void;
-  onDeleteEvent: (id: string) => void;
+  onRequestManageCalendar: (calendar: CalendarSource) => void;
 };
 
 export function CalendarHeader({
@@ -32,7 +30,6 @@ export function CalendarHeader({
   searchTerm,
   calendars,
   calendarMap,
-  upcomingEvents,
   onSearch,
   onPrev,
   onNext,
@@ -41,10 +38,10 @@ export function CalendarHeader({
   onOpenCreate,
   onToggleCalendar,
   onRequestNewCalendar,
-  onDeleteEvent,
+  onRequestManageCalendar,
 }: CalendarHeaderProps) {
   return (
-    <header className="flex flex-col gap-3 border-b border-border bg-panel/80 px-4 py-3 backdrop-blur-md">
+    <header className="flex flex-col gap-3 border-border bg-panel/80 px-4 py-3 backdrop-blur-md">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div className="inline-flex items-center gap-1 rounded-md border border-border bg-background p-1 shadow-sm">
@@ -86,17 +83,21 @@ export function CalendarHeader({
             오늘
           </button>
           <div className="inline-flex items-center gap-1 rounded-md border border-border bg-background/80 p-1 text-xs font-medium shadow-sm">
-            {(["month", "agenda"] as ViewMode[]).map((mode) => (
+            {[
+              { value: "agenda", label: "Agenda" },
+              { value: "month", label: "Month" },
+              { value: "timeline", label: "Timeline" },
+            ].map(({ value, label }) => (
               <button
-                key={mode}
+                key={value}
                 type="button"
-                onClick={() => onChangeView(mode)}
+                onClick={() => onChangeView(value as ViewMode)}
                 className={cn(
-                  "rounded-md px-3 py-1 capitalize transition",
-                  view === mode ? "bg-brand text-white shadow-sm" : "text-muted hover:bg-subtle/60",
+                  "rounded-md px-3 py-1 transition",
+                  view === value ? "bg-brand text-white shadow-sm" : "text-muted hover:bg-subtle/60",
                 )}
               >
-                {mode}
+                {label}
               </button>
             ))}
           </div>
@@ -112,30 +113,38 @@ export function CalendarHeader({
       </div>
 
       <section className="flex flex-col gap-3 rounded-xl border border-border/60 bg-background/80 p-3 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
-            캘린더 표시
-          </span>
-        </div>
-
         <div className="flex flex-wrap items-center gap-2">
           {calendars.map((calendar) => (
-            <label
+            <div
               key={calendar.id}
-              className="inline-flex items-center gap-2 rounded-md border border-border/50 bg-background px-3 py-1.5 text-sm transition hover:border-brand/40 hover:bg-subtle/60"
+              className="group inline-flex items-center gap-2 rounded-md border border-border/50 bg-background px-2 py-1.5 text-sm transition hover:border-brand/40 hover:bg-subtle/60"
             >
               <input
+                id={`calendar-toggle-${calendar.id}`}
                 type="checkbox"
                 className="accent-brand"
                 checked={calendar.visible}
                 onChange={() => onToggleCalendar(calendar.id)}
               />
-              <span
-                className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                style={{ backgroundColor: calendar.color }}
-              />
-              <span className="truncate text-foreground/80">{calendar.name}</span>
-            </label>
+              <label
+                htmlFor={`calendar-toggle-${calendar.id}`}
+                className="flex cursor-pointer items-center gap-2"
+              >
+                <span
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                  style={{ backgroundColor: calendar.color }}
+                />
+                <span className="truncate text-foreground/80">{calendar.name}</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => onRequestManageCalendar(calendar)}
+                className="ml-1 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted opacity-0 transition group-hover:opacity-100 hover:text-foreground hover:bg-subtle/60 focus-visible:opacity-100"
+                aria-label={`${calendar.name} 설정`}
+              >
+                <Settings size={14} />
+              </button>
+            </div>
           ))}
           <button
             type="button"
@@ -145,27 +154,6 @@ export function CalendarHeader({
             <CalendarPlus size={14} />
             새 캘린더
           </button>
-        </div>
-
-        <div className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
-          다가오는 일정
-        </div>
-        <div className="max-h-36 space-y-1.5 overflow-y-auto pr-1">
-          {upcomingEvents.length === 0 && (
-            <div className="rounded-md border border-dashed border-border/60 bg-subtle/40 px-3 py-4 text-xs text-muted">
-              예정된 일정이 없습니다.
-            </div>
-          )}
-          {upcomingEvents.map((event) => (
-            <UpcomingEventCard
-              key={event.id}
-              event={event}
-              calendarName={calendarMap.get(event.calendarId)?.name}
-              color={calendarMap.get(event.calendarId)?.color}
-              onDelete={onDeleteEvent}
-              compact
-            />
-          ))}
         </div>
       </section>
     </header>

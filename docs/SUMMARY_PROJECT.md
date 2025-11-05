@@ -46,6 +46,8 @@
 - SSR 안전성 확보: `localStorage`/`window` 접근에 typeof 검사 적용.  
 - TipTap Table import 방식 정리, `EmojiPicker` 트리거 커스터마이즈 지원.  
 - `npm run build` 성공 (ESLint `next/typescript` 프리셋 누락은 별도 해결 필요).
+- 캘린더 뷰에서 Sidebar 의존성을 제거하고, `CalendarHeader`에 캘린더 토글/설정 관리를 집중시켰으며, `CalendarManageModal`을 통해 이름·색상 수정과 삭제가 가능하도록 개선.
+- 타임라인 뷰는 `useResizeObserver` 기반 동적 컬럼 폭 계산으로 화면 너비에 따라 셀/분류 폭이 조정되고, 내부 스크롤만 발생하도록 구조 변경.
 
 ## 7. 문서 & 유지보수 노트
 - **docs/**:  
