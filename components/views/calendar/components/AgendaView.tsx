@@ -71,7 +71,7 @@ export function AgendaView({
         </button>
       </div>
 
-      <div className="max-h-[560px] overflow-y-auto px-4 py-4 scrollbar-thin">
+      <div className="px-4 py-4">
         {groupedByDay.length === 0 ? (
           <div className="rounded-md border border-dashed border-border/60 bg-subtle/40 px-4 py-6 text-sm text-muted">
             등록된 일정이 없습니다. 새 일정을 추가해보세요.

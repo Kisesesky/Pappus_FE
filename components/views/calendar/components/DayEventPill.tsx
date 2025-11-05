@@ -3,16 +3,55 @@ import type { CalendarEvent } from "@/types/calendar";
 type DayEventPillProps = {
   event: CalendarEvent;
   color?: string;
-  className?: string;
+  variant: "single" | "start" | "middle" | "end";
+  showLabel?: boolean;
+  tooltip?: string;
 };
 
-export function DayEventPill({ event, color, className }: DayEventPillProps) {
+const OFFSET = 6;
+
+const RADIUS: Record<DayEventPillProps["variant"], string> = {
+  single: "9999px",
+  start: "9999px 0 0 9999px",
+  middle: "0",
+  end: "0 9999px 9999px 0",
+};
+
+const LEFT_MARGIN: Record<DayEventPillProps["variant"], number> = {
+  single: 0,
+  start: 0,
+  middle: -OFFSET,
+  end: -OFFSET,
+};
+
+const RIGHT_MARGIN: Record<DayEventPillProps["variant"], number> = {
+  single: 0,
+  start: -OFFSET,
+  middle: -OFFSET,
+  end: 0,
+};
+
+export function DayEventPill({
+  event,
+  color,
+  variant,
+  showLabel = false,
+  tooltip,
+}: DayEventPillProps) {
+  const baseColor = color ?? "#2563eb";
+
   return (
     <div
-      className={`truncate rounded border border-transparent bg-background/90 px-1.5 py-0.5 text-[11px] ${className ?? ""}`}
-      style={{ borderColor: color ?? "transparent" }}
+      className="pointer-events-auto w-full px-2 py-[5px] text-[11px] font-medium leading-tight text-white shadow-sm transition"
+      style={{
+        backgroundColor: baseColor,
+        borderRadius: RADIUS[variant],
+        marginLeft: LEFT_MARGIN[variant],
+        marginRight: RIGHT_MARGIN[variant],
+      }}
+      title={tooltip ?? event.title}
     >
-      <span className="align-middle font-medium text-foreground/80">{event.title}</span>
+      {showLabel ? <span className="truncate">{event.title}</span> : <span aria-hidden> </span>}
     </div>
   );
 }
