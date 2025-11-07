@@ -21,14 +21,14 @@ export default function Topbar() {
       <div className="hidden items-center gap-3 md:flex">
         <Image
           src="/logo.png"
-          alt="AndUp logo"
+          alt="Fourier logo"
           width={40}
           height={40}
           className="h-10 w-10 rounded-md object-cover"
           priority
         />
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold text-foreground">AnDup</span>
+          <span className="text-sm font-semibold text-foreground">Fourier</span>
           <span className="text-[11px] uppercase tracking-[0.12em] text-muted">Product Ops Workspace</span>
         </div>
       </div>

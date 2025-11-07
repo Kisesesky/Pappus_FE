@@ -444,7 +444,7 @@ export function GanttChart({ tasks, onTaskUpdate, zoomLevel, viewMode }: GanttCh
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={editDialog.isOpen} onOpenChange={(open) => {
+      <Dialog open={editDialog.isOpen} onOpenChange={(open: boolean) => {
         if (!open) setEditDialog({ isOpen: false, task: null });
       }}>
         <DialogContent className="sm:max-w-md">

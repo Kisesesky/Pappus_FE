@@ -15,13 +15,6 @@ bun dev
 ```
 /
 ├─app/                          # Next.js App Router 루트 (페이지 라우팅)
-│  ├─api/                       ├─ # 서버 API 라우트 디렉터리
-│  │  ├─calendar/               │  ├─ # 달력 관련 API 라우트 
-│  │  │  └─calendar.ts          │  │  └─ # calendar API 엔드포인트 구현
-│  │  ├─channels/               │  ├─ # 채널 관련 API 라우트 (예: 채널 목록, 생성, 수정)
-│  │  │  └─route.ts             │  │  └─ # channels API 엔드포인트 구현
-│  │  └─messages/               │  ├─ # 메시지 관련 API 라우트
-│  │      └─route.ts            │  │  └─ # messages API 엔드포인트 구현
 │  ├─ app/                      ├─ # 실제 앱 대시보드 내부 페이지 루트
 │  │  ├─chat/                   │  ├─ # 채팅 페이지 루트 (채팅 UI)
 │  │  │  ├─layout.tsx           │  │  ├─ # 채팅 layout 컴포넌트
@@ -139,7 +132,8 @@ bun dev
 │  │  └─utils.ts                │  └─ # 
 │  ├─mocks/                     ├─ # 
 │  │  ├─calenar.ts              │  ├─ # 
-│  │  ├─chat.ts                 │  ├─ # 
+│  │  ├─chat.ts                 │  ├─ #
+│  │  ├─kanban.ts               │  ├─ # 
 │  │  └─worksheet.ts            │  └─ # 
 │  ├─api.ts                     ├─ # API 호출 함수 모음
 │  ├─commands.ts                ├─ # 명령 관련 헬퍼 및 함수
@@ -150,6 +144,13 @@ bun dev
 │  ├─socket.ts                  ├─ # WebSocket 통신 함수 및 설정
 │  └─utils.ts                   └─ # tailwind-merge 및 clsx 같이 공용 유틸 함수
 │
+├─pages/                        # 
+│  ├─api/                       ├─ # 
+│  │  ├─calendar.ts             │  ├─ # 
+│  │  ├─channels.ts             │  ├─ # 
+│  │  └─messages.ts             │  └─ # 
+│  └─_document.tsx              └─ # 
+│
 ├─public/                       # 정적 리소스 (이미지, 아이콘 등)
 │
 ├─scripts/                      # 자동화 스크립트 모음
@@ -157,12 +158,14 @@ bun dev
 │
 ├─store/                        # 전역 상태 관리(주로 zustand 등) 상태 저장소
 │  ├─chat.ts                    ├─ # 채팅 상태 관리 스토어
-│  └─worksheet.ts               └─ # 
+│  ├─issues.ts                  ├─ # 이슈 상태 관리 스토어
+│  └─worksheet.ts               └─ # 워크시트 상태 관리 스토어
 │
 ├─types/                        # TypeScript 타입 선언 모음
 │  ├─calendar.ts                ├─ # 
 │  ├─chat.ts                    ├─ # 
 │  ├─global.d.ts                ├─ # 전역 타입 선언 및 모듈 선언
+│  ├─ossues.ts                  ├─ # 
 │  ├─tiptap-table.d.ts          ├─ # TipTap 테이블 관련 타입 선언
 │  └─worksheet.ts               └─ # 
 │

@@ -21,6 +21,7 @@ export default function CommandPalette() {
 
   const router = useRouter();
   const pathname = usePathname();
+  const currentPath = pathname ?? "";
   const { show } = useToast();
 
   const commands: Command[] = useMemo(() => [
@@ -31,12 +32,12 @@ export default function CommandPalette() {
     {
       id:"new-issue", label:"New Issue…", hint:"Create issue modal",
       run:()=> {
-        if (!pathname.startsWith("/app/issues")) router.push("/app/issues");
+        if (!currentPath.startsWith("/app/issues")) router.push("/app/issues");
         setTimeout(()=> window.dispatchEvent(new CustomEvent("open-new-issue-modal")), 200);
         show({ title:"Create Issue", description:"이슈 생성 모달을 열었습니다.", variant:"success" });
       }
     },
-  ], [router, pathname, show]);
+  ], [router, currentPath, show]);
 
   const baseResults = useMemo(() => {
     if (!q.trim()) return commands;

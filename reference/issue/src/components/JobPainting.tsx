@@ -1,4 +1,5 @@
 import { useState } from "react";
+type CheckboxState = boolean | "indeterminate";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -451,7 +452,7 @@ export function JobPainting() {
                                 checked={selectedMOs.includes(
                                   mo.id,
                                 )}
-                                onCheckedChange={(checked) =>
+                                onCheckedChange={(checked: CheckboxState) =>
                                   handleMOSelection(
                                     mo.id,
                                     checked as boolean,

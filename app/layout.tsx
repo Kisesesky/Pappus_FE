@@ -3,8 +3,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AnDup - Add more. Go up. andup.",
-  description: "workpage"
+  title: "Fourier - Find the Rhythm of Your Team",
+  description: "Fourier is a workspace where teams find their rhythm. We transform scattered information into a clear, unified flow"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
