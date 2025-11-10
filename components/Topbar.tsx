@@ -28,8 +28,8 @@ export default function Topbar() {
           priority
         />
         <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold text-foreground">Fourier</span>
-          <span className="text-[11px] uppercase tracking-[0.12em] text-muted">Product Ops Workspace</span>
+          <span className="text-sm font-semibold text-foreground">FOURIER</span>
+          <span className="text-[11px] uppercase tracking-[0.12em] text-muted">Fourier Workspace</span>
         </div>
       </div>
 

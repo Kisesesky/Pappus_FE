@@ -39,6 +39,8 @@ import {
 } from "@/types/issues";
 import { CalendarDays, LayoutDashboard, Palette, Scissors, Users } from "lucide-react";
 
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
+
 type FilterPanel = "timeline" | "subcontract" | null;
 
 type CreateJobSheetPayload = Pick<JobSheet, "code" | "name" | "start" | "end" | "status">;
@@ -70,6 +72,8 @@ type KanbanState = {
   filters: {
     timeline: TimelineFilter;
     vendor: VendorFilter;
+    owner: string | "all";
+    scope: "all" | "mine";
   };
   ui: {
     filterPanel: FilterPanel;
@@ -80,9 +84,17 @@ type KanbanState = {
   closeFilterPanel: () => void;
   setTimelineFilter: (filter: TimelineFilter) => void;
   setVendorFilter: (filter: VendorFilter) => void;
+  setOwnerFilter: (owner: string | "all") => void;
+  setScopeFilter: (scope: "all" | "mine") => void;
   openJobSheetDialog: () => void;
   closeJobSheetDialog: () => void;
   createJobSheet: (payload: CreateJobSheetPayload) => void;
+  updateJobSheet: (id: string, patch: Partial<JobSheet>) => void;
+  updatePaintJob: (id: string, patch: Partial<PaintJob>) => void;
+  updateSubcontract: (id: string, patch: Partial<Subcontract>) => void;
+  updateMachine: (id: string, patch: Partial<Machine>) => void;
+  acknowledgeAlert: (id: string) => void;
+  createQuickTask: (payload: QuickTaskPayload) => void;
   toggleWorkflowNode: (id: string) => void;
   initRealtime: () => void;
   emitWorkflowUpdate: (payload: WorkflowUpdatePayload) => void;
@@ -105,6 +117,14 @@ type WorkflowUpdatePayload = {
   message?: string;
   author?: string;
   lastUpdatedIso?: string;
+};
+
+type QuickTaskPayload = {
+  title: string;
+  owner: string;
+  startDate: string;
+  endDate: string;
+  status?: WorkflowStatus;
 };
 
 type RealtimeEnvelope = {
@@ -238,8 +258,8 @@ const reminders = kanbanReminders;
 const tabs: TabConfig[] = [
   {
     id: "production",
-    label: "Production Schedule",
-    description: "Order progress and risk overview.",
+    label: "Planning Timeline",
+    description: "모든 업무를 한 번에 보는 간트뷰",
     icon: CalendarDays,
   },
   {
@@ -298,6 +318,8 @@ export const useKanban = create<KanbanState>()((set, get) => ({
   filters: {
     timeline: "all",
     vendor: "all",
+    owner: "all",
+    scope: "all",
   },
   ui: {
     filterPanel: null,
@@ -321,6 +343,14 @@ export const useKanban = create<KanbanState>()((set, get) => ({
     set((state) => ({
       filters: { ...state.filters, vendor: filter },
       ui: { ...state.ui, filterPanel: null },
+    })),
+  setOwnerFilter: (owner) =>
+    set((state) => ({
+      filters: { ...state.filters, owner },
+    })),
+  setScopeFilter: (scope) =>
+    set((state) => ({
+      filters: { ...state.filters, scope },
     })),
   openJobSheetDialog: () =>
     set((state) => ({
@@ -350,6 +380,101 @@ export const useKanban = create<KanbanState>()((set, get) => ({
           allIds: [id, ...state.jobSheets.allIds.filter((existing) => existing !== id)],
         },
         ui: { ...state.ui, jobSheetDialogOpen: false },
+        announcements: appendAnnouncement(state.announcements, `${entry.name} 작업지를 추가했습니다.`),
+      };
+    }),
+  updateJobSheet: (id, patch) =>
+    set((state) => {
+      const target = state.jobSheets.byId[id];
+      if (!target) return state;
+      const updated: JobSheet = { ...target, ...patch };
+      return {
+        jobSheets: {
+          ...state.jobSheets,
+          byId: { ...state.jobSheets.byId, [id]: updated },
+        },
+      };
+    }),
+  updatePaintJob: (id, patch) =>
+    set((state) => {
+      const target = state.paintQueue.byId[id];
+      if (!target) return state;
+      const updated: PaintJob = { ...target, ...patch };
+      return {
+        paintQueue: {
+          ...state.paintQueue,
+          byId: { ...state.paintQueue.byId, [id]: updated },
+        },
+      };
+    }),
+  updateSubcontract: (id, patch) =>
+    set((state) => {
+      const target = state.subcontracts.byId[id];
+      if (!target) return state;
+      const updated: Subcontract = { ...target, ...patch };
+      return {
+        subcontracts: {
+          ...state.subcontracts,
+          byId: { ...state.subcontracts.byId, [id]: updated },
+        },
+      };
+    }),
+  updateMachine: (id, patch) =>
+    set((state) => {
+      const target = state.machines.byId[id];
+      if (!target) return state;
+      const updated: Machine = { ...target, ...patch };
+      return {
+        machines: {
+          ...state.machines,
+          byId: { ...state.machines.byId, [id]: updated },
+        },
+      };
+    }),
+  acknowledgeAlert: (id) =>
+    set((state) => {
+      const target = state.resourceAlerts.byId[id];
+      if (!target) return state;
+      const updated: ResourceAlert = { ...target, acknowledged: true };
+      return {
+        resourceAlerts: {
+          ...state.resourceAlerts,
+          byId: { ...state.resourceAlerts.byId, [id]: updated },
+        },
+      };
+    }),
+  createQuickTask: (payload) =>
+    set((state) => {
+      const id = `task-${Date.now()}`;
+      const startIso = new Date(payload.startDate).toISOString();
+      const endIso = new Date(payload.endDate).toISOString();
+      const durationDays = Math.max(1, Math.round((new Date(endIso).getTime() - new Date(startIso).getTime()) / DAY_IN_MS) + 1);
+      const node: WorkflowNode = {
+        id,
+        parentId: null,
+        kind: "task",
+        title: payload.title,
+        owner: payload.owner,
+        startDate: startIso,
+        endDate: endIso,
+        durationDays,
+        progress: 0,
+        status: payload.status ?? "planned",
+        dependencies: [],
+        resourceLoad: 0.4,
+        assignments: [],
+      };
+      return {
+        workflow: {
+          ...state.workflow,
+          nodes: {
+            byId: { ...state.workflow.nodes.byId, [id]: node },
+            allIds: [...state.workflow.nodes.allIds, id],
+          },
+          rootIds: [id, ...state.workflow.rootIds],
+          expanded: { ...state.workflow.expanded, [id]: false },
+        },
+        announcements: appendAnnouncement(state.announcements, `${node.title} 업무를 추가했습니다.`),
       };
     }),
   toggleWorkflowNode: (id) =>

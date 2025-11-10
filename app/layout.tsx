@@ -3,7 +3,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Fourier - Find the Rhythm of Your Team",
+  title: "Fourier",
   description: "Fourier is a workspace where teams find their rhythm. We transform scattered information into a clear, unified flow"
 };
 

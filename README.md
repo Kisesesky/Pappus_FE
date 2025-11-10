@@ -112,6 +112,20 @@ bun dev
 │  │  ├─docs/                   │  ├─ # 문서 뷰 컴포넌트 모음
 │  │  │  └─DocView.tsx          │  │  └─ # 문서 편집 및 표시 주 뷰 컴포넌트
 │  │  ├─issues/                 │  ├─ # 이슈(프로젝트 관리) 뷰 컴포넌트 모음
+│  │  │  ├─kanban/              │  │  ├─ # 
+│  │  │  │  ├─constants.ts      │  │  │  ├─ # 
+│  │  │  │  ├─date.ts           │  │  │  ├─ # 
+│  │  │  │  ├─FilterPanel.tsx   │  │  │  ├─ # 
+│  │  │  │  ├─JobSheetDialog.tsx│  │  │  ├─ # 
+│  │  │  │  ├─JobSheetSection   │  │  │  ├─ # 
+│  │  │  │  ├─PaintingSections  │  │  │  ├─ # 
+│  │  │  │  ├─PlanningSection   │  │  │  ├─ # 
+│  │  │  │  ├─ResourceSection   │  │  │  ├─ # 
+│  │  │  │  ├─SubcontractSection│  │  │  │  ├─ # 
+│  │  │  │  ├─text.ts           │  │  │  ├─ # 
+│  │  │  │  ├─types.ts          │  │  │  ├─ # 
+│  │  │  │  ├─utils.ts          │  │  │  ├─ # 
+│  │  │  │  └─validation.ts     │  │  │  └─ # 
 │  │  │  └─KanbanView.tsx       │  │  └─ # Kanban 보드 뷰 
 │  │  ├─settings/               │  ├─ # 
 │  │  │  ├─DashboardSett        │  │  ├─
