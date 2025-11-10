@@ -50,7 +50,7 @@ export const KANBAN_TEXT = {
     statusChange: "상태 변경",
     detail: {
       open: "자세히",
-      close: "자세히 닫기",
+      close: "닫기",
     },
     quickTask: {
       title: "빠른 업무 추가",

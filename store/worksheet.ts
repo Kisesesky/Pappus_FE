@@ -40,6 +40,9 @@ type WorksheetStore = {
   updateWorksheetTitle: (worksheetId: string, title: string) => void;
   setWorksheetStatus: (worksheetId: string, status: WorksheetStatus) => void;
   deleteRow: (worksheetId: string, rowId: string) => void;
+  addColumn: (worksheetId: string, type?: WorksheetColumnType) => string | null;
+  updateColumn: (worksheetId: string, columnId: string, payload: Partial<Omit<WorksheetColumn, 'id'>>) => void;
+  deleteColumn: (worksheetId: string, columnId: string) => void;
 };
 
 const META_KEY = 'fd.worksheet.meta';
@@ -207,20 +210,30 @@ export const useWorksheet = create<WorksheetStore>((set, get) => ({
     set((state) => {
       const current = state.worksheetMap[worksheetId];
       if (!current) return state;
+      const now = Date.now();
       const rows = current.rows.map((row) => {
         if (row.id !== rowId) return row;
+        let found = false;
+        const cells = row.cells.map((cell) => {
+          if (cell.columnId === columnId) {
+            found = true;
+            return { ...cell, value };
+          }
+          return cell;
+        });
+        if (!found) {
+          cells.push({ columnId, value });
+        }
         return {
           ...row,
-          updatedAt: Date.now(),
-          cells: row.cells.map((cell) =>
-            cell.columnId === columnId ? { ...cell, value } : cell,
-          ),
+          updatedAt: now,
+          cells,
         };
       });
       const nextWorksheet: Worksheet = {
         ...current,
         rows,
-        updatedAt: Date.now(),
+        updatedAt: now,
       };
       const worksheetMap = { ...state.worksheetMap, [worksheetId]: nextWorksheet };
       const meta = upsertMeta(
@@ -295,6 +308,112 @@ export const useWorksheet = create<WorksheetStore>((set, get) => ({
       if (rows.length === current.rows.length) return state;
       const now = Date.now();
       const nextWorksheet: Worksheet = { ...current, rows, updatedAt: now };
+      const worksheetMap = { ...state.worksheetMap, [worksheetId]: nextWorksheet };
+      const meta = upsertMeta(
+        state.worksheets.filter((item) => item.id !== worksheetId),
+        {
+          id: nextWorksheet.id,
+          title: nextWorksheet.title,
+          ownerName: nextWorksheet.ownerName,
+          updatedAt: now,
+          status: nextWorksheet.status,
+        },
+      );
+      lsSet(META_KEY, meta);
+      lsSet(DATA_KEY, worksheetMap);
+      return { worksheetMap, worksheets: meta };
+    });
+  },
+
+  addColumn: (worksheetId, type = 'text') => {
+    const worksheet = get().worksheetMap[worksheetId];
+    if (!worksheet) return null;
+    const columnId = generateId('col');
+    const column: WorksheetColumn = {
+      id: columnId,
+      title: `New Column ${worksheet.columns.length + 1}`,
+      type,
+      options: type === 'select' ? ['Option 1', 'Option 2'] : undefined,
+    };
+
+    set((state) => {
+      const current = state.worksheetMap[worksheetId];
+      if (!current) return state;
+      const now = Date.now();
+      const nextWorksheet: Worksheet = {
+        ...current,
+        columns: [...current.columns, column],
+        rows: current.rows.map((row) => ({
+          ...row,
+          cells: [...row.cells, { columnId, value: null }],
+        })),
+        updatedAt: now,
+      };
+      const worksheetMap = { ...state.worksheetMap, [worksheetId]: nextWorksheet };
+      const meta = upsertMeta(
+        state.worksheets.filter((item) => item.id !== worksheetId),
+        {
+          id: nextWorksheet.id,
+          title: nextWorksheet.title,
+          ownerName: nextWorksheet.ownerName,
+          updatedAt: now,
+          status: nextWorksheet.status,
+        },
+      );
+      lsSet(META_KEY, meta);
+      lsSet(DATA_KEY, worksheetMap);
+      return { worksheetMap, worksheets: meta };
+    });
+
+    return columnId;
+  },
+
+  updateColumn: (worksheetId, columnId, payload) => {
+    set((state) => {
+      const current = state.worksheetMap[worksheetId];
+      if (!current) return state;
+      const now = Date.now();
+      const columns = current.columns.map((column) =>
+        column.id === columnId ? { ...column, ...payload } : column,
+      );
+      const nextWorksheet: Worksheet = {
+        ...current,
+        columns,
+        updatedAt: now,
+      };
+      const worksheetMap = { ...state.worksheetMap, [worksheetId]: nextWorksheet };
+      const meta = upsertMeta(
+        state.worksheets.filter((item) => item.id !== worksheetId),
+        {
+          id: nextWorksheet.id,
+          title: nextWorksheet.title,
+          ownerName: nextWorksheet.ownerName,
+          updatedAt: now,
+          status: nextWorksheet.status,
+        },
+      );
+      lsSet(META_KEY, meta);
+      lsSet(DATA_KEY, worksheetMap);
+      return { worksheetMap, worksheets: meta };
+    });
+  },
+
+  deleteColumn: (worksheetId, columnId) => {
+    set((state) => {
+      const current = state.worksheetMap[worksheetId];
+      if (!current || current.columns.length <= 1) return state;
+      const now = Date.now();
+      const columns = current.columns.filter((column) => column.id !== columnId);
+      const rows = current.rows.map((row) => ({
+        ...row,
+        cells: row.cells.filter((cell) => cell.columnId !== columnId),
+      }));
+      const nextWorksheet: Worksheet = {
+        ...current,
+        columns,
+        rows,
+        updatedAt: now,
+      };
       const worksheetMap = { ...state.worksheetMap, [worksheetId]: nextWorksheet };
       const meta = upsertMeta(
         state.worksheets.filter((item) => item.id !== worksheetId),

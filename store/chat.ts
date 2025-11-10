@@ -76,6 +76,7 @@ type State = {
   savedByUser: Record<string, string[]>;
 
   loadChannels: () => Promise<void>;
+  createWorkspace: (name?: string) => Promise<void>;
   setWorkspace: (id: string) => Promise<void>;
   setChannel: (id: string) => Promise<void>;
   toggleSectionCollapsed: (sectionId: string, value?: boolean) => void;
@@ -313,6 +314,41 @@ export const useChat = create<State>((set, get) => ({
       set({ messages: list });
       get().updateChannelActivity(current, list);
     }
+  },
+
+  createWorkspace: async (name) => {
+    const state = get();
+    const id = `ws-${Math.random().toString(36).slice(2, 8)}`;
+    const label =
+      name?.trim() && name.trim().length > 0
+        ? name.trim()
+        : `Server ${state.workspaces.length + 1}`;
+    const generalChannelId = `general-${id}`;
+    const newWorkspace: Workspace = {
+      id,
+      name: label,
+      sections: [
+        { id: `sec-${id}-starred`, title: "Starred", type: "starred", itemIds: [], collapsed: false },
+        { id: `sec-${id}-channels`, title: "Channels", type: "channels", itemIds: [generalChannelId], collapsed: false },
+        { id: `sec-${id}-dms`, title: "Direct Messages", type: "dms", itemIds: [], collapsed: false },
+      ],
+    };
+    const generalChannel: Channel = {
+      id: generalChannelId,
+      name: "# general",
+      workspaceId: id,
+    };
+    const workspaces = [...state.workspaces, newWorkspace];
+    const allChannels = [...state.allChannels, generalChannel];
+    const channelMembers = { ...state.channelMembers, [generalChannelId]: [] };
+
+    lsSet(WORKSPACES_KEY, workspaces);
+    lsSet(CHANNELS_KEY, allChannels);
+    lsSet(ACTIVE_WORKSPACE_KEY, id);
+
+    set({ workspaces, allChannels, channelMembers });
+    lsSet(MEMBERS_KEY, channelMembers);
+    await get().setWorkspace(id);
   },
 
   setWorkspace: async (id) => {

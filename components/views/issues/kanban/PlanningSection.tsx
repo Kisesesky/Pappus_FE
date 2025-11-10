@@ -243,7 +243,7 @@ export function PlanningSection() {
         <div className="space-y-4 border-b border-border/60 px-6 py-6 sm:px-8">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex w-full flex-col gap-3 md:flex-row md:items-center">
-              <label className="flex flex-1 items-center gap-2 rounded-full border border-border/70 bg-background/80 px-4 py-2 text-sm text-muted focus-within:border-brand">
+              <label className="flex flex-1 items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-2 text-sm text-muted focus-within:border-brand">
                 <Search size={14} className="text-muted" />
                 <span className="sr-only">{KANBAN_TEXT.filters.taskSearch}</span>
                 <input
@@ -298,7 +298,7 @@ export function PlanningSection() {
                   setTaskFormError(null);
                   setTaskDialogOpen(true);
                 }}
-                className="inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white shadow-sm"
+                className="inline-flex items-center gap-2 rounded-full bg-brand px-3 py-2 text-xs font-semibold text-white shadow-sm"
               >
                 <Plus size={12} /> {KANBAN_TEXT.actions.newTask}
               </button>
@@ -312,7 +312,7 @@ export function PlanningSection() {
                 onClick={chip.onClick}
                 disabled={chip.disabled}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full border px-4 py-2 transition",
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-2 transition",
                   chip.disabled
                     ? "cursor-not-allowed border-border/40 text-muted/70"
                     : "border-border/60 bg-background/70 hover:border-brand hover:text-brand",
@@ -350,17 +350,17 @@ export function PlanningSection() {
           {toolbarHint && <p className="text-[10px] text-rose-500">{toolbarHint}</p>}
         </div>
 
-        <div className="grid w-full gap-6 px-4 py-6 sm:px-8 lg:grid-cols-[3fr_2fr]">
+        <div className="grid w-full gap-6 px-3 py-6 sm:px-8 lg:grid-cols-[3fr_2fr]">
           <div className="overflow-x-auto rounded-2xl border border-border bg-white">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left">{KANBAN_TEXT.labels.taskTable.title}</th>
-                  <th className="px-4 py-3 text-left">{KANBAN_TEXT.filters.owner.label}</th>
-                  <th className="px-4 py-3 text-left">{KANBAN_TEXT.labels.taskTable.status}</th>
-                  <th className="px-4 py-3 text-left">{KANBAN_TEXT.labels.taskTable.progress}</th>
-                  <th className="px-4 py-3 text-left">{KANBAN_TEXT.labels.quickTask.start}</th>
-                  <th className="px-4 py-3 text-left">{KANBAN_TEXT.labels.quickTask.end}</th>
+                  <th className="px-3 py-3 text-left">{KANBAN_TEXT.labels.taskTable.title}</th>
+                  <th className="px-3 py-3 text-left">{KANBAN_TEXT.filters.owner.label}</th>
+                  <th className="px-3 py-3 text-left">{KANBAN_TEXT.labels.taskTable.status}</th>
+                  <th className="px-3 py-3 text-left">{KANBAN_TEXT.labels.taskTable.progress}</th>
+                  <th className="px-3 py-3 text-left">{KANBAN_TEXT.labels.quickTask.start}</th>
+                  <th className="px-3 py-3 text-left">{KANBAN_TEXT.labels.quickTask.end}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/70 text-xs">
@@ -374,7 +374,7 @@ export function PlanningSection() {
                   return (
                     <Fragment key={node.id}>
                       <tr style={{ height: ROW_HEIGHT }} className="transition hover:bg-brand/5">
-                        <td className="px-4">
+                        <td className="px-3">
                           <div className="flex items-center gap-2" style={{ paddingLeft: indent }}>
                             {isParent ? (
                               <button
@@ -393,8 +393,8 @@ export function PlanningSection() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 text-sm text-muted">{node.owner || KANBAN_TEXT.filters.owner.empty}</td>
-                        <td className="px-4">
+                        <td className="px-3 text-sm text-muted">{node.owner || KANBAN_TEXT.filters.owner.empty}</td>
+                        <td className="px-3">
                           <select
                             className="rounded-full border border-border/60 bg-background px-3 py-1 text-[10px] font-semibold"
                             aria-label={`${node.title} ${KANBAN_TEXT.labels.statusChange}`}
@@ -408,7 +408,7 @@ export function PlanningSection() {
                             ))}
                           </select>
                         </td>
-                        <td className="px-4">
+                        <td className="px-3">
                           <label className="flex items-center gap-2" htmlFor={`progress-${node.id}`}>
                             <span className="sr-only" id={`progress-label-${node.id}`}>
                               {node.title} {KANBAN_TEXT.labels.taskTable.progress}
@@ -427,8 +427,8 @@ export function PlanningSection() {
                             <span className="text-xs font-semibold text-foreground">{progressPercent}%</span>
                           </label>
                         </td>
-                        <td className="px-4 text-sm text-muted">{startLabel}</td>
-                        <td className="px-4 text-sm text-muted">
+                        <td className="px-3 text-sm text-muted">{startLabel}</td>
+                        <td className="px-3 text-sm text-muted">
                           <div className="flex items-center justify-between gap-2">
                             <span>{endLabel}</span>
                             <button
@@ -500,13 +500,13 @@ export function PlanningSection() {
                 })}
                 {!visibleRows.length && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-muted">
+                    <td colSpan={6} className="px-3 py-6 text-center text-muted">
                       <div className="space-y-2">
                         <p>{KANBAN_TEXT.empty.noTasks}</p>
                         <button
                           type="button"
                           onClick={resetPlanningFilters}
-                          className="inline-flex items-center gap-2 rounded-full border border-border/70 px-4 py-1.5 text-xs font-semibold text-muted hover:border-brand hover:text-brand"
+                          className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3 py-1.5 text-xs font-semibold text-muted hover:border-brand hover:text-brand"
                         >
                           {KANBAN_TEXT.actions.resetFilters}
                         </button>
@@ -605,13 +605,13 @@ export function PlanningSection() {
                 </div>
               </div>
             ) : (
-              <p className="px-4 py-6 text-center text-xs text-muted">No timeline data available.</p>
+              <p className="px-3 py-6 text-center text-xs text-muted">No timeline data available.</p>
             )}
           </div>
         </div>
       </section>
       {taskDialogOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4 py-6">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-3 py-6">
           <div className="w-full max-w-md rounded-2xl border border-border bg-panel p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <div>
@@ -703,7 +703,7 @@ export function PlanningSection() {
               <div className="flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  className="rounded-full border border-border/70 px-4 py-2 text-sm text-muted hover:border-rose-300 hover:text-foreground"
+                  className="rounded-full border border-border/70 px-3 py-2 text-sm text-muted hover:border-rose-300 hover:text-foreground"
                   onClick={() => {
                     setTaskDialogOpen(false);
                     setTaskFormError(null);
@@ -714,7 +714,7 @@ export function PlanningSection() {
                 <button
                   type="submit"
                   disabled={!isTaskFormValid}
-                  className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-50"
+                  className="rounded-full bg-brand px-3 py-2 text-sm font-semibold text-white shadow disabled:opacity-50"
                 >
                   {KANBAN_TEXT.actions.add}
                 </button>
