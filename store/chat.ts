@@ -76,7 +76,9 @@ type State = {
   savedByUser: Record<string, string[]>;
 
   loadChannels: () => Promise<void>;
-  createWorkspace: (name?: string) => Promise<void>;
+  createWorkspace: (opts?: { name?: string; icon?: string; backgroundColor?: string; image?: string }) => Promise<void>;
+  updateWorkspace: (id: string, patch: { name?: string; icon?: string; backgroundColor?: string; image?: string | null }) => void;
+  deleteWorkspace: (id: string) => Promise<void>;
   setWorkspace: (id: string) => Promise<void>;
   setChannel: (id: string) => Promise<void>;
   toggleSectionCollapsed: (sectionId: string, value?: boolean) => void;
@@ -126,6 +128,15 @@ const CHANNELS_KEY = "fd.chat.channels";
 const WORKSPACES_KEY = "fd.chat.workspaces";
 const ACTIVE_WORKSPACE_KEY = "fd.chat.workspace:active";
 const MEMBERS_KEY = "fd.chat.members";
+
+const normalizeColor = (value?: string) => {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const withoutHash = trimmed.replace(/^#/, "");
+  if (!withoutHash) return undefined;
+  return `#${withoutHash}`;
+};
 const MSGS_KEY = (id: string) => `fd.chat.messages:${id}`;
 const PINS_KEY = "fd.chat.pins";
 const SAVED_KEY = (uid: string) => `fd.chat.saved:${uid}`;
@@ -316,17 +327,26 @@ export const useChat = create<State>((set, get) => ({
     }
   },
 
-  createWorkspace: async (name) => {
+  createWorkspace: async (opts) => {
+    const { name, icon, backgroundColor, image } = opts || {};
     const state = get();
     const id = `ws-${Math.random().toString(36).slice(2, 8)}`;
     const label =
       name?.trim() && name.trim().length > 0
         ? name.trim()
         : `Server ${state.workspaces.length + 1}`;
+    const parsedIcon = icon?.trim()
+      ? Array.from(icon.trim()).slice(0, 2).join("")
+      : undefined;
+    const parsedColor = normalizeColor(backgroundColor);
+    const parsedImage = image?.trim() ? image.trim() : undefined;
     const generalChannelId = `general-${id}`;
     const newWorkspace: Workspace = {
       id,
       name: label,
+      icon: parsedIcon,
+      backgroundColor: parsedColor,
+      image: parsedImage,
       sections: [
         { id: `sec-${id}-starred`, title: "Starred", type: "starred", itemIds: [], collapsed: false },
         { id: `sec-${id}-channels`, title: "Channels", type: "channels", itemIds: [generalChannelId], collapsed: false },
@@ -349,6 +369,86 @@ export const useChat = create<State>((set, get) => ({
     set({ workspaces, allChannels, channelMembers });
     lsSet(MEMBERS_KEY, channelMembers);
     await get().setWorkspace(id);
+  },
+  updateWorkspace: (id, patch) => {
+    const state = get();
+    const target = state.workspaces.find(ws => ws.id === id);
+    if (!target) return;
+    const updated: Workspace = {
+      ...target,
+      ...(patch.name !== undefined ? { name: patch.name.trim() || target.name } : {}),
+      ...(patch.icon !== undefined ? { icon: patch.icon?.trim() || undefined } : {}),
+      ...(patch.backgroundColor !== undefined ? { backgroundColor: normalizeColor(patch.backgroundColor) } : {}),
+      ...(patch.image !== undefined ? { image: patch.image || undefined } : {}),
+    };
+    const workspaces = state.workspaces.map(ws => ws.id === id ? updated : ws);
+    lsSet(WORKSPACES_KEY, workspaces);
+    set({ workspaces });
+  },
+  deleteWorkspace: async (id) => {
+    const state = get();
+    if (state.workspaces.length === 0) return;
+    const exists = state.workspaces.some(ws => ws.id === id);
+    if (!exists) return;
+    const channelsToRemove = new Set(state.allChannels.filter(ch => ch.workspaceId === id).map(ch => ch.id));
+    let workspaces = state.workspaces.filter(ws => ws.id !== id);
+    let allChannels = state.allChannels.filter(ch => ch.workspaceId !== id);
+    let channelMembers = { ...state.channelMembers };
+    let channelTopics = { ...state.channelTopics };
+    let channelActivity = { ...state.channelActivity };
+    let typingUsers = { ...state.typingUsers };
+    let pinnedByChannel = { ...state.pinnedByChannel };
+    channelsToRemove.forEach((channelId) => {
+      delete channelMembers[channelId];
+      delete channelTopics[channelId];
+      delete channelActivity[channelId];
+      delete typingUsers[channelId];
+      delete pinnedByChannel[channelId];
+      lsSet(MSGS_KEY(channelId), []);
+    });
+    lsSet(MEMBERS_KEY, channelMembers);
+    lsSet(TOPICS_KEY, channelTopics);
+    lsSet(CHANNELS_KEY, allChannels);
+    let nextWorkspaceId = state.workspaceId;
+    if (state.workspaceId === id) {
+      nextWorkspaceId = workspaces[0]?.id ?? "";
+    }
+    if (workspaces.length === 0) {
+      lsSet(WORKSPACES_KEY, []);
+      ensureSeed();
+      const seededWorkspaces = lsGet<Workspace[]>(WORKSPACES_KEY, []);
+      const seededChannels = lsGet<Channel[]>(CHANNELS_KEY, []);
+      const fallbackId = seededWorkspaces[0]?.id ?? DEFAULT_WORKSPACE_ID;
+      set({
+        workspaces: seededWorkspaces,
+        allChannels: seededChannels,
+        workspaceId: fallbackId,
+        channels: seededChannels.filter((ch) => ch.workspaceId === fallbackId),
+        channelMembers,
+        channelTopics,
+        channelActivity,
+        typingUsers,
+        pinnedByChannel,
+      });
+      await get().setWorkspace(fallbackId);
+      return;
+    }
+    lsSet(WORKSPACES_KEY, workspaces);
+    set({
+      workspaces,
+      allChannels,
+      channelMembers,
+      channelTopics,
+      channelActivity,
+      typingUsers,
+      pinnedByChannel,
+    });
+    if (state.workspaceId === id) {
+      await get().setWorkspace(nextWorkspaceId);
+    } else {
+      const currentChannels = allChannels.filter((ch) => ch.workspaceId === state.workspaceId);
+      set({ channels: currentChannels });
+    }
   },
 
   setWorkspace: async (id) => {

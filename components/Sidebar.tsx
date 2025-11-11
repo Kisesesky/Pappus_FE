@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useCallback, useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import * as Dialog from "@radix-ui/react-dialog";
 import type { LucideIcon } from "lucide-react";
 import {
   MessageSquare,
@@ -13,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
+  Settings,
   Hash,
   Star,
   VolumeX,
@@ -21,6 +23,7 @@ import {
   FileText,
   Table,
   Check,
+  Trash2,
 } from "lucide-react";
 import clsx from "clsx";
 import { useChat } from "@/store/chat";
@@ -52,6 +55,40 @@ const DOC_PAGE_MENU = [
   { id: "roadmap", title: "제품 로드맵", description: "분기별 마일스톤" },
   { id: "retro", title: "프로젝트 회고", description: "잘된 점과 개선점" },
 ];
+
+const DEFAULT_WORKSPACE_BG = "#0EA5E9";
+
+const normalizeIconValue = (value?: string) => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return Array.from(trimmed).slice(0, 2).join("");
+};
+
+const getWorkspaceInitials = (name?: string) => {
+  const trimmed = name?.trim();
+  if (!trimmed) return "SV";
+  const parts = trimmed.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "SV";
+  const letters =
+    parts.length === 1
+      ? parts[0].slice(0, 2)
+      : parts.slice(0, 2).map((part) => part[0] || "").join("");
+  return letters.toUpperCase();
+};
+
+const getWorkspaceBadgeStyle = (target?: { backgroundColor?: string; image?: string }) => {
+  if (target?.image) {
+    return {
+      backgroundImage: `url(${target.image})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    } as const;
+  }
+  return {
+    backgroundColor: target?.backgroundColor || DEFAULT_WORKSPACE_BG,
+  } as const;
+};
 
 type ExpandableNavProps = {
   icon: LucideIcon;
@@ -239,7 +276,8 @@ export default function Sidebar() {
     typingUsers,
     toggleStar,
     channelActivity,
-    createWorkspace,
+    updateWorkspace,
+    deleteWorkspace,
   } = useChat();
   const pathname = usePathname();
   const router = useRouter();
@@ -252,6 +290,11 @@ export default function Sidebar() {
     dms: false,
   });
   const [serverMenuOpen, setServerMenuOpen] = useState(false);
+  const [workspaceSettingsOpen, setWorkspaceSettingsOpen] = useState(false);
+  const [workspaceSettingsName, setWorkspaceSettingsName] = useState("");
+  const [workspaceSettingsIcon, setWorkspaceSettingsIcon] = useState("");
+  const [workspaceSettingsSaving, setWorkspaceSettingsSaving] = useState(false);
+  const [workspaceDeleteConfirm, setWorkspaceDeleteConfirm] = useState(false);
   const serverSwitcherRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -302,14 +345,32 @@ export default function Sidebar() {
   const workspace = useMemo(() => {
     return workspaces.find(ws => ws.id === workspaceId) || workspaces[0];
   }, [workspaces, workspaceId]);
-  const workspaceInitials = useMemo(() => {
-    const name = workspace?.name?.trim();
-    if (!name) return "SV";
-    const parts = name.split(/\s+/).filter(Boolean);
-    if (parts.length === 0) return "SV";
-    const letters = parts.length === 1 ? parts[0].slice(0, 2) : parts.slice(0, 2).map(part => part[0]).join("");
-    return letters.toUpperCase();
-  }, [workspace?.name]);
+  const workspaceInitials = useMemo(
+    () => getWorkspaceInitials(workspace?.name),
+    [workspace?.name],
+  );
+  const workspaceBadgeLabel = useMemo(
+    () => (workspace?.icon?.trim() ? workspace.icon : workspaceInitials),
+    [workspace?.icon, workspaceInitials],
+  );
+  const workspaceBadgeStyle = useMemo(
+    () => getWorkspaceBadgeStyle(workspace),
+    [workspace],
+  );
+  const workspaceSettingsIconPreview = useMemo(
+    () => normalizeIconValue(workspaceSettingsIcon) || workspaceBadgeLabel,
+    [workspaceSettingsIcon, workspaceBadgeLabel],
+  );
+
+  useEffect(() => {
+    if (workspaceSettingsOpen && workspace) {
+      setWorkspaceSettingsName(workspace.name ?? "");
+      setWorkspaceSettingsIcon(workspace.icon ?? "");
+      setWorkspaceDeleteConfirm(false);
+    } else if (!workspaceSettingsOpen) {
+      setWorkspaceDeleteConfirm(false);
+    }
+  }, [workspaceSettingsOpen, workspace]);
 
   const workspaceChannels = useMemo(() => {
     if (channels.length > 0) return channels;
@@ -454,6 +515,10 @@ export default function Sidebar() {
     }
   }, [pathname, router]);
 
+  const handleOpenWorkspaceSettings = useCallback(() => {
+    setWorkspaceSettingsOpen(true);
+  }, []);
+
   const handleWorkspaceSwitch = useCallback(
     async (id: string) => {
       if (id === workspaceId) {
@@ -466,51 +531,104 @@ export default function Sidebar() {
     [setWorkspace, workspaceId],
   );
 
-  const handleCreateServer = useCallback(async () => {
-    let nextName: string | undefined;
-    if (typeof window !== "undefined") {
-      const suggestion = `Server ${workspaces.length + 1}`;
-      const response = window.prompt("새 서버 이름을 입력하세요", suggestion);
-      nextName = response?.trim() ? response.trim() : undefined;
+  const handleWorkspaceSettingsSave = useCallback(() => {
+    if (!workspace || workspaceSettingsSaving) return;
+    const nextName = workspaceSettingsName.trim() || workspace.name;
+    const nextIcon = normalizeIconValue(workspaceSettingsIcon) || undefined;
+    setWorkspaceSettingsSaving(true);
+    try {
+      updateWorkspace(workspace.id, {
+        name: nextName,
+        icon: nextIcon,
+      });
+      setWorkspaceSettingsOpen(false);
+      setWorkspaceDeleteConfirm(false);
+    } finally {
+      setWorkspaceSettingsSaving(false);
     }
-    await createWorkspace(nextName);
-    setServerMenuOpen(false);
-  }, [createWorkspace, workspaces.length]);
+  }, [updateWorkspace, workspace, workspaceSettingsIcon, workspaceSettingsName, workspaceSettingsSaving]);
+
+  const handleWorkspaceDelete = useCallback(async () => {
+    if (!workspace || workspaceSettingsSaving || !workspaceDeleteConfirm) {
+      setWorkspaceDeleteConfirm(true);
+      return;
+    }
+    setWorkspaceSettingsSaving(true);
+    try {
+      await deleteWorkspace(workspace.id);
+      setWorkspaceSettingsOpen(false);
+      setWorkspaceDeleteConfirm(false);
+    } finally {
+      setWorkspaceSettingsSaving(false);
+    }
+  }, [deleteWorkspace, workspace, workspaceDeleteConfirm, workspaceSettingsSaving]);
 
   return (
     <div className="flex min-h-0 w-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
       <div className="border-b border-sidebar-border px-3 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-sky-500 text-white font-semibold shadow-sm">
-            {workspaceInitials}
+          <div
+            className={clsx(
+              "flex h-10 w-10 items-center justify-center rounded-lg text-lg font-semibold shadow-sm",
+              workspace?.image ? "text-transparent" : "text-white",
+            )}
+            style={workspaceBadgeStyle}
+          >
+            {!workspace?.image && workspaceBadgeLabel}
           </div>
           <div className="relative min-w-0" ref={serverSwitcherRef}>
-            <div className="text-xs uppercase tracking-[0.1em] text-muted">Server</div>
+            <div className="flex items-center justify-between text-xs uppercase tracking-[0.1em] text-muted">
+              <span>Workspace</span>
+              <button
+                type="button"
+                onClick={handleOpenWorkspaceSettings}
+                className="rounded-md p-1 text-muted hover:text-foreground"
+                aria-label="워크스페이스 설정"
+              >
+                <Settings size={14} />
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => setServerMenuOpen((prev) => !prev)}
-              className="mt-1 flex w-full items-center gap-2 rounded-md border border-sidebar-border px-3 py-1.5 text-left text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent"
+              className="mt-1 flex w-full items-center justify-between gap-2 rounded-md border border-sidebar-border px-3 py-1.5 text-left text-sm font-semibold text-sidebar-foreground hover:bg-sidebar-accent"
             >
               <span className="truncate">{workspace?.name ?? "Server"}</span>
-              <ChevronDown size={14} className={clsx("transition-transform", serverMenuOpen ? "rotate-180" : "")} />
+              <ChevronDown size={12} className={clsx("transition-transform", serverMenuOpen ? "rotate-180" : "")} />
             </button>
             {serverMenuOpen && (
               <div className="absolute left-0 right-0 z-20 mt-2 rounded-lg border border-sidebar-border bg-sidebar shadow-lg">
                 <div className="max-h-60 overflow-auto py-1">
-                  {workspaces.map((ws) => (
-                    <button
-                      key={ws.id}
-                      type="button"
-                      onClick={() => void handleWorkspaceSwitch(ws.id)}
-                      className={clsx(
-                        "flex w-full items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-sidebar-accent",
-                        ws.id === workspaceId && "bg-sidebar-primary/10 text-sidebar-foreground font-semibold",
-                      )}
-                    >
-                      <span className="truncate">{ws.name}</span>
-                      {ws.id === workspaceId && <Check size={14} className="text-sidebar-primary" />}
-                    </button>
-                  ))}
+                  {workspaces.map((ws) => {
+                    const badgeStyle = getWorkspaceBadgeStyle(ws);
+                    const hasImage = !!ws.image;
+                    const badgeLabel = ws.icon?.trim() ? ws.icon : getWorkspaceInitials(ws.name);
+                    return (
+                      <button
+                        key={ws.id}
+                        type="button"
+                        onClick={() => void handleWorkspaceSwitch(ws.id)}
+                        className={clsx(
+                          "flex w-full items-center justify-between px-3 py-1.5 text-left text-sm hover:bg-sidebar-accent",
+                          ws.id === workspaceId && "bg-sidebar-primary/10 text-sidebar-foreground font-semibold",
+                        )}
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <span
+                            className={clsx(
+                              "flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold",
+                              hasImage ? "text-transparent" : "text-sidebar-foreground/80",
+                            )}
+                            style={badgeStyle}
+                          >
+                            {!hasImage && badgeLabel}
+                          </span>
+                          <span className="truncate">{ws.name}</span>
+                        </span>
+                        {ws.id === workspaceId && <Check size={14} className="text-sidebar-primary" />}
+                      </button>
+                    );
+                  })}
                   {workspaces.length === 0 && (
                     <div className="px-3 py-2 text-xs text-muted">No servers yet.</div>
                   )}
@@ -522,15 +640,14 @@ export default function Sidebar() {
             )}
           </div>
         </div>
-        <div className="mt-3 flex gap-2">
-          <button
-            type="button"
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-1.5 text-xs font-medium text-sidebar-primary hover:border-sidebar-primary hover:bg-sidebar-primary/10"
-            onClick={() => void handleCreateServer()}
+        <div className="mt-3">
+          <Link
+            href="/setup/workspace"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-1.5 text-xs font-medium text-sidebar-primary transition hover:border-sidebar-primary hover:bg-sidebar-primary/10"
           >
             <PlusCircle size={14} />
             New Workspace
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -694,6 +811,108 @@ export default function Sidebar() {
       <div className="p-3 border-t border-border text-xs text-muted">
         ⌘K Command Palette / v0.1
       </div>
+
+      <Dialog.Root open={workspaceSettingsOpen} onOpenChange={setWorkspaceSettingsOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
+          <Dialog.Content className="fixed left-1/2 top-28 z-50 w-[360px] -translate-x-1/2 rounded-2xl border border-border bg-panel p-5 shadow-panel focus:outline-none">
+            <Dialog.Title className="text-base font-semibold">워크스페이스 설정</Dialog.Title>
+            <p className="mt-1 text-sm text-muted">이름과 아이콘을 수정하거나 서버를 삭제할 수 있어요.</p>
+            <div className="mt-4 space-y-4 text-sm">
+              <div className="flex items-center gap-3">
+                <div
+                  className={clsx(
+                    "flex h-12 w-12 items-center justify-center rounded-xl text-2xl font-semibold text-white shadow-sm",
+                    workspace?.image ? "text-transparent" : "text-white",
+                  )}
+                  style={workspaceBadgeStyle}
+                >
+                  {!workspace?.image && workspaceSettingsIconPreview}
+                </div>
+                <div className="text-xs text-muted">
+                  현재 워크스페이스의 아이콘과 배경색입니다.
+                </div>
+              </div>
+              <label className="block space-y-1 text-xs">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Workspace Name</span>
+                <input
+                  value={workspaceSettingsName}
+                  onChange={(event) => setWorkspaceSettingsName(event.target.value)}
+                  placeholder="워크스페이스 이름"
+                  className="w-full rounded-md border border-border bg-subtle/60 px-3 py-2 text-sm text-foreground outline-none focus:border-sidebar-primary"
+                />
+              </label>
+              <label className="block space-y-1 text-xs">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Icon</span>
+                <input
+                  value={workspaceSettingsIcon}
+                  onChange={(event) => setWorkspaceSettingsIcon(event.target.value)}
+                  placeholder="이모지 또는 2글자"
+                  maxLength={4}
+                  className="w-full rounded-md border border-border bg-subtle/60 px-3 py-2 text-sm text-foreground outline-none focus:border-sidebar-primary"
+                />
+                <p className="text-[11px] text-muted">이모지나 2글자 이내 텍스트만 표시됩니다.</p>
+              </label>
+            </div>
+            <div className="mt-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {!workspaceDeleteConfirm ? (
+                  <button
+                    type="button"
+                    onClick={() => setWorkspaceDeleteConfirm(true)}
+                    className="inline-flex items-center gap-2 rounded-md border border-destructive/40 px-3 py-1.5 text-sm text-destructive hover:border-destructive"
+                  >
+                    <Trash2 size={14} />
+                    워크스페이스 삭제
+                  </button>
+                ) : (
+                  <div className="w-full rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                    <p className="font-semibold">정말 삭제할까요?</p>
+                    <p className="mt-1 text-xs">
+                      채널과 메시지가 모두 제거됩니다. 다른 워크스페이스를 기본으로 지정한 뒤 삭제가 진행됩니다.
+                    </p>
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        className="rounded-md border border-destructive/30 px-3 py-1.5 text-xs text-destructive hover:border-destructive"
+                        onClick={() => setWorkspaceDeleteConfirm(false)}
+                      >
+                        삭제 취소
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleWorkspaceDelete()}
+                        disabled={workspaceSettingsSaving}
+                        className="inline-flex items-center gap-2 rounded-md border border-destructive bg-destructive/90 px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-60"
+                      >
+                        {workspaceSettingsSaving ? "삭제 중..." : "네, 삭제합니다"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-1 items-center justify-end gap-2">
+                  <Dialog.Close asChild>
+                    <button
+                      type="button"
+                      className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-subtle/60"
+                    >
+                      취소
+                    </button>
+                  </Dialog.Close>
+                  <button
+                    type="button"
+                    onClick={handleWorkspaceSettingsSave}
+                    disabled={workspaceSettingsSaving}
+                    className="inline-flex items-center gap-2 rounded-md border border-sidebar-primary bg-sidebar-primary/10 px-3 py-1.5 text-sm font-semibold text-sidebar-primary disabled:opacity-60"
+                  >
+                    {workspaceSettingsSaving ? "저장 중..." : "변경 사항 저장"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

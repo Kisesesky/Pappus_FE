@@ -16,6 +16,7 @@ import {
   Flame,
   FileText,
   Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd';
 import { formatDistanceToNow } from 'date-fns';
@@ -507,6 +508,10 @@ export default function DashboardView({
       ),
     [channelActivity],
   );
+  const upcomingEvents = useMemo(() => {
+    const sorted = [...eventList].sort((a, b) => a.start.getTime() - b.start.getTime());
+    return sorted.filter((event) => event.start >= new Date());
+  }, [eventList]);
 
   const topChannels = useMemo(() => {
     const entries = Object.entries(channelActivity || {});
@@ -523,14 +528,6 @@ export default function DashboardView({
       )
       .slice(0, 4);
   }, [channelActivity, channelMap]);
-
-  const upcomingEvents = useMemo(() => {
-    const now = Date.now();
-    return eventList
-      .filter((event) => event.start.getTime() >= now - 2 * 60 * 60 * 1000)
-      .sort((a, b) => a.start.getTime() - b.start.getTime())
-      .slice(0, 4);
-  }, [eventList]);
 
   const metrics = useMemo(() => {
     const docHint = docStats.lastSaved ? `${formatRelative(docStats.lastSaved)} 업데이트` : '최근 저장 없음';
@@ -582,13 +579,23 @@ export default function DashboardView({
     ];
   }, [docStats, issueStats, unreadTotal, topChannels, upcomingEvents]);
 
-  const quickActions: {
+const quickActions: {
     id: string;
     label: string;
     icon: typeof BookText;
     href?: string;
     onClick?: () => void;
   }[] = [
+    {
+      id: 'dashboard-settings',
+      label: '대시보드 설정',
+      icon: SlidersHorizontal,
+      onClick: () => {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('dashboard-settings:open'));
+        }
+      },
+    },
     { id: 'docs', label: 'Docs 작성', icon: BookText, href: '/app/docs' },
     {
       id: 'issue',
@@ -1092,37 +1099,27 @@ export default function DashboardView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background">
-      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 lg:px-10">
-        <section className="relative overflow-hidden rounded-2xl border border-border bg-panel px-6 py-8 shadow-sm">
-          {heroOverlayStyle ? (
-            <div className="absolute inset-0 opacity-25" style={heroOverlayStyle} />
-          ) : null}
-          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-4">
-              <div className="inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground shadow-sm">
+      <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 px-3 py-6 lg:px-7">
+        <section className="rounded-3xl border border-border bg-white px-5 py-6 shadow-sm">
+          <div className="flex flex-col gap-5">
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-secondary/20 px-3 py-1 text-xs font-semibold text-secondary">
                 <PanelsTopLeft size={16} />
-                워크스페이스 요약
+                워크스페이스 허브
               </div>
-              <h1 className="text-3xl font-semibold leading-tight text-foreground sm:text-[34px]">
+              <h1 className="text-3xl font-semibold text-foreground sm:text-[34px]">
                 {userName}님, {greet}!
               </h1>
               <p className="max-w-2xl text-sm text-muted sm:text-base">
-                Docs · Chat · Issues · Calendar를 한 화면에서 조율하세요. 진행 상황을 빠르게 점검하고,
-                필요한 Surface로 곧바로 이동할 수 있습니다.
+                Docs · Chat · Issues · Calendar의 핵심 정보를 한눈에 확인하고 필요한 작업으로 바로 이동하세요.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 if (action.href) {
                   return (
-                    <Button
-                      key={action.id}
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
+                    <Button key={action.id} asChild variant="outline" size="sm" className="gap-2">
                       <Link href={action.href}>
                         <Icon size={14} />
                         {action.label}
@@ -1146,9 +1143,7 @@ export default function DashboardView({
               })}
             </div>
           </div>
-        </section>
-
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        </section><section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (

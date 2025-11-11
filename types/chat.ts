@@ -49,6 +49,8 @@ export type Workspace = {
   name: string;
   icon?: string;
   sections: WorkspaceSection[];
+  backgroundColor?: string;
+  image?: string;
 };
 
 export type FileItem = {
@@ -74,4 +76,3 @@ export type ChatUser = {
   id: string;
   name: string;
 };
-

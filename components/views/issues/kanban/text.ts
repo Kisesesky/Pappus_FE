@@ -94,27 +94,27 @@ export const KANBAN_TEXT = {
       "at-risk": "주의",
       blocked: "지연",
       done: "완료",
-    } satisfies Record<WorkflowStatus, string>,
+    } as Record<WorkflowStatus, string>,
     jobSheet: {
       planned: "계획",
       "in-progress": "진행",
       completed: "완료",
       delayed: "지연",
-    } satisfies Record<JobSheet["status"], string>,
+    } as Record<JobSheet["status"], string>,
     paint: {
       scheduled: "예약",
       mixing: "믹싱",
       ready: "준비완료",
-    } satisfies Record<PaintJob["status"], string>,
+    } as Record<PaintJob["status"], string>,
     subcontract: {
       planned: "준비",
       "in-progress": "진행",
       delayed: "지연",
-    } satisfies Record<Subcontract["status"], string>,
+    } as Record<Subcontract["status"], string>,
     machine: {
       available: "대기",
       busy: "사용 중",
-    } satisfies Record<Machine["status"], string>,
+    } as Record<Machine["status"], string>,
   },
   validation: {
     quickTask: {
