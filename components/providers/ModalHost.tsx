@@ -2,8 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import SettingsModal from '@/components/views/settings/SettingsModal';
-import DashboardSettingsModal from '@/components/views/settings/DashboardSettingsModal';
+import SettingsModal from '@/components/settings/SettingsModal';
+import DashboardSettingsModal from '@/components/settings/DashboardSettingsModal';
 
 export default function ModalHost() {
   const [openSettings, setOpenSettings] = useState(false);

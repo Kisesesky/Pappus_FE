@@ -8,7 +8,7 @@
 
 ## 2. 라우팅 & 레이아웃
 - `/app/layout.tsx` → 전역 `<html lang="ko">` 래퍼.
-- `/app/app/layout.tsx` → 하위 페이지에 공통적으로 AppShell을 입히기 위한 중간 레이아웃.
+- `/app/layout.tsx` → 하위 페이지에 공통적으로 AppShell을 입히기 위한 중간 레이아웃.
 - 도메인별 라우트  
   - `/app/chat`: 채팅 뷰 (실제 UI 중심), `ChatLayout`에서 AppShell + Drawer + Right Panel 구성.  
   - `/app/docs`: 문서 에디터, TipTap 기반 뷰.  
@@ -18,7 +18,7 @@
 
 ## 3. 핵심 UI 컴포넌트
 - `components/layout/AppShell.tsx` : Sidebar / Topbar / RightPanel 슬롯을 받아 레이아웃 구성.
-- `components/Sidebar.tsx` : 워크스페이스·채널 섹션 UI, 섹션 접힘 상태와 DM 생성 등을 지원.
+- `components/layout/Sidebar.tsx` : 워크스페이스·채널 섹션 UI, 섹션 접힘 상태와 DM 생성 등을 지원.
 - `components/views/chat/ChatView.tsx` : 메시지 리스트, Thread, CommandPalette, Pin/Saved 관리 등 주요 UX가 집중된 파일.
 - `components/chat/*` : 채팅 관련 세부 컴포넌트(Composer, EmojiPicker, MentionPopover, ReactionBar, FilesPanel 등) 분리 구현.
 - `components/views/docs/DocView.tsx` : TipTap 에디터 확장(테이블, 코드 블록, 히스토리 등) 포함.

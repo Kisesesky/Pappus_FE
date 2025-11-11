@@ -110,8 +110,12 @@ const WorkspaceWizard = () => {
     }
     const reader = new FileReader();
     reader.onload = () => {
-      const value = typeof reader.result === "string" ? reader.result : null;
-      setForm((prev) => ({ ...prev, image: value }));
+      const result = reader.result;
+      if (typeof result !== "string") {
+        setForm((prev) => ({ ...prev, image: null }));
+        return;
+      }
+      setForm((prev) => ({ ...prev, image: result }));
     };
     reader.readAsDataURL(file);
   }, []);

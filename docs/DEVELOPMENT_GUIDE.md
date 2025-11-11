@@ -31,7 +31,7 @@
   - `DocView.tsx` : 에디터 본체
   - `DocEditorContext.tsx` : 전역 Editor Provider
   - `DocsRightPanel.tsx` : Outline / History 탭
-  - `app/app/docs/layout.tsx` : 전용 Drawer Shell
+- `app/docs/layout.tsx` : 전용 Drawer Shell
 - 주요 기능:
   - / 명령 팝업 (todo, ul, ol, code, table, image, file)
   - 테이블 편집 + 셀 스타일링
@@ -44,7 +44,7 @@
 ### 💬 Chat
 - 구성 요소:
   - `ChatRightPanel.tsx` : Thread / AI Summary 탭
-  - `app/app/chat/layout.tsx` : Drawer + 단축키 Shell
+- `app/chat/layout.tsx` : Drawer + 단축키 Shell
 - 특징:
   - 채널별 스레드 / 미리보기 / 요약
   - 모바일 Drawer 전환
@@ -52,7 +52,7 @@
 
 ### 📋 Issues (Kanban)
 - `KanbanView.tsx`: DnD 칸반 보드
-- `app/app/issues/layout.tsx`: AppShell + Drawer 구조
+ - `app/issues/layout.tsx`: AppShell + Drawer 구조
 - 기능:
   - LocalStorage 기반 보드 저장
   - Undo/Redo 히스토리

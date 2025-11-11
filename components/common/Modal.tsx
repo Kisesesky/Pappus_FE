@@ -13,6 +13,7 @@ type ModalProps = {
   children: React.ReactNode;
   className?: string;
   widthClass?: string; // e.g. "max-w-4xl"
+  heightClass?: string;
 };
 
 export default function Modal({
@@ -21,7 +22,8 @@ export default function Modal({
   title,
   children,
   className,
-  widthClass = 'max-w-5xl'
+  widthClass = 'max-w-5xl',
+  heightClass
 }: ModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -40,7 +42,7 @@ export default function Modal({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className={clsx(
         'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] rounded-2xl bg-white shadow-xl',
-        widthClass, className
+        widthClass, heightClass, className
       )}>
         <div className="flex items-center justify-between px-5 py-3 border-b">
           <h3 className="text-sm font-semibold">{title}</h3>

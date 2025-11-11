@@ -17,7 +17,7 @@ bun dev
 ```ts
 /
 ├─app/                          # Next.js App Router 루트 (페이지 라우팅)
-│  ├─ app/                      ├─ # 실제 앱 대시보드 내부 페이지 루트
+│  ├─app/                       ├─ # 실제 앱 대시보드 내부 페이지 루트
 │  │  ├─chat/                   │  ├─ # 채팅 페이지 루트 (채팅 UI)
 │  │  │  ├─layout.tsx           │  │  ├─ # 채팅 layout 컴포넌트
 │  │  │  └─page.tsx             │  │  └─ # 채팅 페이지 컴포넌트
@@ -40,6 +40,9 @@ bun dev
 │  │  │  │  └─page.tsx          │  │  │  └─ # 특정 워크시트 상세 보기 컴포넌트
 │  │  │  ├─layout.tsx           │  │  ├─ # 워크시트 전용 레이아웃 (사이드바 등)
 │  │  │  └─page.tsx             │  │  └─ # 워크시트 리스트 또는 기본 페이지
+│  │  ├─setup/                  │  ├─ #
+│  │  │  └─workspace            │  │  └─ #
+│  │  │     └─page.tsx          │  │     └─ 
 │  │  └─layout.tsx              │  └─ # Sidebar, Topbar, RightPanel 포함한 앱 레이아웃 컴포넌트
 │  ├─favicon.ico                ├─ # 사이트 파비콘 아이콘
 │  ├─globals.css                ├─ # Tailwind CSS 전역 스타일 정의
