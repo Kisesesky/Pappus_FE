@@ -13,6 +13,8 @@ pnpm dev
 # or
 bun dev
 ```
+
+```ts
 /
 ├─app/                          # Next.js App Router 루트 (페이지 라우팅)
 │  ├─ app/                      ├─ # 실제 앱 대시보드 내부 페이지 루트
