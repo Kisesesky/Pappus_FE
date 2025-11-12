@@ -78,7 +78,7 @@ export default function WorksheetDetailView({ worksheetId }: { worksheetId: stri
 
   useEffect(() => {
     if (!worksheet) {
-      router.replace("/app/worksheet");
+      router.replace("/worksheet");
     }
   }, [worksheet, router]);
 
@@ -256,14 +256,14 @@ export default function WorksheetDetailView({ worksheetId }: { worksheetId: stri
     return FORMULA_FUNCTIONS.filter((fn) => fn.startsWith(token) && fn !== token);
   }, [showFormulaSuggestions, selectedRawValue]);
 
-  const handleBack = () => router.push("/app/worksheet");
+  const handleBack = () => router.push("/worksheet");
   const handleDuplicate = () => {
     const id = duplicateWorksheet(worksheet.id);
-    if (id) router.push(`/app/worksheet/${id}`);
+    if (id) router.push(`/worksheet/${id}`);
   };
   const handleDelete = () => {
     deleteWorksheet(worksheet.id);
-    router.push("/app/worksheet");
+    router.push("/worksheet");
   };
   const handleTitleChange = useCallback(
     (value: string) => {
@@ -507,13 +507,17 @@ export default function WorksheetDetailView({ worksheetId }: { worksheetId: stri
       });
     };
 
+    if (typeof window === "undefined" || typeof document === "undefined") {
+      return;
+    }
+
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("copy", handleCopy);
-    window.addEventListener("paste", handlePaste);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("copy", handleCopy);
-      window.removeEventListener("paste", handlePaste);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
     };
   }, [
     selectedCell,

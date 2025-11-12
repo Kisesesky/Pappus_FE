@@ -9,7 +9,7 @@
 ## 🧩 프로젝트 초기 설정
 
 - Next.js 14 + TailwindCSS 기반 프론트엔드 구조 설계  
-- `src` 폴더 제거 후 `/app` 루트 구조로 통일  
+- `src` 폴더 제거 후 `` 루트 구조로 통일  
 - `moduleResolution`을 `bundle → node`로 변경하여 타입 오류 해결  
 - 기본 레이아웃(AppLayout) → Sidebar, Topbar, RightPanel 3단 구성 완성  
 
@@ -27,7 +27,7 @@
   - `useToast must be used within ToastProvider` 오류 → `AppShell`에 `ToastProvider` 추가  
   - `RightPanel` 중복 렌더 → IssuesLayout에서만 유지하도록 구조 수정
 - **향후 개선 방향:**
-  - `/app/issues/[id]` 중첩 라우팅  
+  - `/issues/[id]` 중첩 라우팅  
   - 모바일 Drawer 토글  
 
 ---

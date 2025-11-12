@@ -1,9 +1,17 @@
 // lib/mocks/worksheet.ts
 
 import type { Worksheet, WorksheetMeta } from "@/types/worksheet";
+import { defaultMembers } from "@/lib/mocks/members";
 
 const HOUR = 1000 * 60 * 60;
 const DAY = HOUR * 24;
+
+const memberName = (id: string, fallback: string) =>
+  defaultMembers.find((member) => member.id === id)?.name ?? fallback;
+
+const YOU = memberName("mem-you", "You");
+const ALICE = memberName("mem-alice", "Alice");
+const BOB = memberName("mem-bob", "Bob");
 
 export function createDefaultWorksheets(): Worksheet[] {
   const now = Date.now();
@@ -12,7 +20,7 @@ export function createDefaultWorksheets(): Worksheet[] {
     {
       id: "ws-001",
       title: "Launch Checklist",
-      ownerName: "Alice",
+      ownerName: ALICE,
       updatedAt: now - HOUR * 5,
       status: "in-review",
       columns: [
@@ -27,7 +35,7 @@ export function createDefaultWorksheets(): Worksheet[] {
           updatedAt: now - HOUR * 5,
           cells: [
             { columnId: "col-title", value: "QA sign-off" },
-            { columnId: "col-owner", value: "Bob" },
+            { columnId: "col-owner", value: BOB },
             { columnId: "col-status", value: "In Progress" },
             { columnId: "col-due", value: "2025-10-30" },
           ],
@@ -37,7 +45,7 @@ export function createDefaultWorksheets(): Worksheet[] {
           updatedAt: now - HOUR * 8,
           cells: [
             { columnId: "col-title", value: "Release notes" },
-            { columnId: "col-owner", value: "You" },
+            { columnId: "col-owner", value: YOU },
             { columnId: "col-status", value: "Pending" },
             { columnId: "col-due", value: "2025-10-31" },
           ],
@@ -49,7 +57,7 @@ export function createDefaultWorksheets(): Worksheet[] {
     {
       id: "ws-002",
       title: "Customer Success Plans",
-      ownerName: "Bob",
+      ownerName: BOB,
       updatedAt: now - DAY,
       status: "done",
       columns: [
@@ -64,7 +72,7 @@ export function createDefaultWorksheets(): Worksheet[] {
           updatedAt: now - HOUR * 30,
           cells: [
             { columnId: "col-account", value: "Acme Inc." },
-            { columnId: "col-owner", value: "Alice" },
+            { columnId: "col-owner", value: ALICE },
             { columnId: "col-health", value: "Green" },
             { columnId: "col-renewal", value: "2025-12-01" },
           ],
@@ -74,7 +82,7 @@ export function createDefaultWorksheets(): Worksheet[] {
           updatedAt: now - HOUR * 20,
           cells: [
             { columnId: "col-account", value: "Globex" },
-            { columnId: "col-owner", value: "You" },
+            { columnId: "col-owner", value: YOU },
             { columnId: "col-health", value: "Yellow" },
             { columnId: "col-renewal", value: "2026-01-12" },
           ],
@@ -84,7 +92,7 @@ export function createDefaultWorksheets(): Worksheet[] {
     {
       id: "ws-003",
       title: "Experiment Tracker",
-      ownerName: "You",
+      ownerName: YOU,
       updatedAt: now - 1000 * 60 * 30,
       status: "draft",
       columns: [
@@ -114,4 +122,3 @@ export function createDefaultWorksheetMap(source: Worksheet[]): Record<string, W
     return acc;
   }, {});
 }
-

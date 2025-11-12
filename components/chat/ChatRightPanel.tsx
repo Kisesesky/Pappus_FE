@@ -35,6 +35,7 @@ const statusLabels: Record<PresenceState, string> = {
 type FriendRowProps = {
   name: string;
   initials: string;
+  avatarUrl?: string;
   snippet?: string;
   unread: number;
   mention: number;
@@ -51,6 +52,7 @@ type FriendRowProps = {
 function FriendRow({
   name,
   initials,
+  avatarUrl,
   snippet,
   unread,
   mention,
@@ -86,9 +88,13 @@ function FriendRow({
       )}
     >
       <div className="flex items-center gap-3">
-        <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-subtle text-xs font-semibold uppercase text-muted">
-          {initials || "DM"}
-          <span className={clsx("absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-border", presenceClass)} />
+        <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-subtle text-xs font-semibold uppercase text-muted overflow-hidden border border-border/70">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+          ) : (
+            initials || "DM"
+          )}
+          <span className={clsx("absolute -bottom-0.5 -right-0.5 h-2 w-2 rounded-full border border-border bg-panel", presenceClass)} />
           {selectable && (
             <span
               className={clsx(
@@ -228,6 +234,7 @@ export default function ChatRightPanel() {
         const status = (userStatus[user.id] ?? "offline") as PresenceState;
         return {
           user,
+          avatarUrl: user.avatarUrl,
           dmId,
           initials: user.name.split(/\s+/).map(part => part[0] ?? "").join("").slice(0, 2).toUpperCase(),
           snippet,
@@ -373,6 +380,7 @@ export default function ChatRightPanel() {
                   key={friend.user.id}
                   name={friend.user.name}
                   initials={friend.initials}
+                  avatarUrl={friend.avatarUrl}
                   snippet={friend.snippet}
                   unread={friend.unread}
                   mention={friend.mention}

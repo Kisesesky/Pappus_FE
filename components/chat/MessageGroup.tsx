@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
-import type { Attachment, Msg } from '@/types/chat';
+import type { Attachment, Msg, ChatUser } from '@/types/chat';
 import MarkdownText from '@/components/chat/MarkdownText';
 import EmojiPicker from '@/components/chat/EmojiPicker';
 import ReactionBar from '@/components/chat/ReactionBar';
@@ -19,6 +19,7 @@ type MessageRowProps = {
   otherSeenNames: string[];
   showHeader: boolean;
   showAvatar: boolean;
+  avatarUrl?: string;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
   onReact: (id: string, emoji: string) => void;
@@ -36,6 +37,7 @@ type MessageGroupProps = {
   view: 'compact' | 'cozy';
   meId: string;
   otherSeen: Record<string, string[]>;
+  users: Record<string, ChatUser>;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
   onReact: (id: string, emoji: string) => void;
@@ -141,6 +143,7 @@ function MessageRow({
   otherSeenNames,
   showHeader,
   showAvatar,
+  avatarUrl,
   onEdit,
   onDelete,
   onReact,
@@ -191,11 +194,15 @@ function MessageRow({
           <div className="pt-1">
             {showAvatar ? (
               <button
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-subtle/40 text-xs font-semibold text-muted"
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-border bg-subtle/40 text-xs font-semibold text-muted"
                 onClick={(e) => openMenu(e, m, isMine)}
                 aria-label={`${m.author} 메시지 메뉴 열기`}
               >
-                {initials}
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={m.author} className="h-full w-full object-cover" />
+                ) : (
+                  initials
+                )}
               </button>
             ) : (
               <div className="h-4 w-9" />
@@ -327,6 +334,7 @@ export function MessageGroup({
   view,
   meId,
   otherSeen,
+  users,
   onEdit,
   onDelete,
   onReact,
@@ -348,6 +356,7 @@ export function MessageGroup({
           isMine={isMine}
           view={view}
           meId={meId}
+          avatarUrl={users[item.authorId]?.avatarUrl}
           otherSeenNames={index === items.length - 1 ? seenNames : []}
           showHeader={index === 0}
           showAvatar={index === 0}

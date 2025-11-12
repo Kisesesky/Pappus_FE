@@ -196,7 +196,7 @@ export default function ChatView() {
         break;
       }
       case 'link': {
-        const url = `${location.origin}/app/chat#${m.id}`;
+        const url = `${location.origin}/chat#${m.id}`;
         await navigator.clipboard.writeText(url);
         show({ title: "링크 복사됨", description: url });
         break;
@@ -392,6 +392,7 @@ export default function ChatView() {
                 view={view}
                 meId={me.id}
                 otherSeen={otherSeen}
+                users={users}
                 onEdit={(id, text) => {
                   const msg = messages.find((m) => m.id === id);
                   if (msg && msg.authorId !== me.id) {

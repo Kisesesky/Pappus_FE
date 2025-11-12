@@ -147,7 +147,7 @@ const WorkspaceWizard = () => {
           backgroundColor: form.color,
           image: form.image || undefined,
         });
-        router.push("/app/chat");
+        router.push("/chat");
       } finally {
         setSaving(false);
       }

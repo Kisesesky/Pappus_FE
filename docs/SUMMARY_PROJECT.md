@@ -1,23 +1,23 @@
 # Flowdash Frontend — 프로젝트 전반 요약
 
 ## 1. 아키텍처 개요
-- **Next.js 14 (App Router)** 기반 SPA/SSR 혼합 구조, `/app` 폴더에 각 도메인별 레이아웃·페이지 배치.
+- **Next.js 14 (App Router)** 기반 SPA/SSR 혼합 구조, `` 폴더에 각 도메인별 레이아웃·페이지 배치.
 - **TypeScript + TailwindCSS**로 UI 레이어 구성, 공통 다크 톤 색상은 `tailwind.config.ts`에서 정의.
 - 전역 상태는 **Zustand(store/chat.ts)**로 관리, 로컬스토리지 퍼시스트(`lib/persist.ts`)를 통해 백엔드 없이 데이터 유지.
 - 문서 작업/빌드 로그는 `/docs` 폴더에 관리(`README`, `DEVELOPMENT_GUIDE`, `PROJECT_NOTES`, `2025-10-23_summary` 등).
 
 ## 2. 라우팅 & 레이아웃
-- `/app/layout.tsx` → 전역 `<html lang="ko">` 래퍼.
-- `/app/layout.tsx` → 하위 페이지에 공통적으로 AppShell을 입히기 위한 중간 레이아웃.
+- `/layout.tsx` → 전역 `<html lang="ko">` 래퍼.
+- `/layout.tsx` → 하위 페이지에 공통적으로 AppShell을 입히기 위한 중간 레이아웃.
 - 도메인별 라우트  
-  - `/app/chat`: 채팅 뷰 (실제 UI 중심), `ChatLayout`에서 AppShell + Drawer + Right Panel 구성.  
-  - `/app/docs`: 문서 에디터, TipTap 기반 뷰.  
-  - `/app/issues`: 칸반 보드, DnD-kit 기반.  
-  - `/app/calendar`: 일정 페이지(현재 정적).  
+  - `/chat`: 채팅 뷰 (실제 UI 중심), `ChatLayout`에서 AppShell + Drawer + Right Panel 구성.  
+  - `/docs`: 문서 에디터, TipTap 기반 뷰.  
+  - `/issues`: 칸반 보드, DnD-kit 기반.  
+  - `/calendar`: 일정 페이지(현재 정적).  
 - Routes 외에도 `/api/*` mock 핸들러가 존재하며 프론트 전용 개발 흐름을 지원.
 
 ## 3. 핵심 UI 컴포넌트
-- `components/layout/AppShell.tsx` : Sidebar / Topbar / RightPanel 슬롯을 받아 레이아웃 구성.
+- `components/layoutShell.tsx` : Sidebar / Topbar / RightPanel 슬롯을 받아 레이아웃 구성.
 - `components/layout/Sidebar.tsx` : 워크스페이스·채널 섹션 UI, 섹션 접힘 상태와 DM 생성 등을 지원.
 - `components/views/chat/ChatView.tsx` : 메시지 리스트, Thread, CommandPalette, Pin/Saved 관리 등 주요 UX가 집중된 파일.
 - `components/chat/*` : 채팅 관련 세부 컴포넌트(Composer, EmojiPicker, MentionPopover, ReactionBar, FilesPanel 등) 분리 구현.

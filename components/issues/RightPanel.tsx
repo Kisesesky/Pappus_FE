@@ -62,7 +62,7 @@ export default function RightPanel({
           {routeId && (
             <button
               className="text-xs px-2 py-1 rounded border border-border hover:bg-subtle/60"
-              onClick={() => router.push("/app/issues")}
+              onClick={() => router.push("/issues")}
               title="패널 닫기"
             >
               닫기

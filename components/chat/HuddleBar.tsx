@@ -4,13 +4,26 @@
 import { Mic, MicOff, PhoneOff } from "lucide-react";
 import { useChat } from "@/store/chat";
 
-function Avatar({ name }: { name: string }) {
-  const initials = name.split(/\s+/).map(s=>s[0]).join('').slice(0,2).toUpperCase();
-  return <div className="w-6 h-6 rounded-full bg-subtle/80 border border-border flex items-center justify-center text-[10px]">{initials}</div>;
+function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
+  const initials = name
+    .split(/\s+/)
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  return (
+    <div className="flex h-6 w-6 overflow-hidden rounded-full border border-border bg-subtle/80 text-[10px] font-semibold text-muted">
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        <span className="grid h-full w-full place-items-center">{initials}</span>
+      )}
+    </div>
+  );
 }
 
 export default function HuddleBar({ channelId }: { channelId: string }) {
-  const { huddles, stopHuddle, toggleHuddleMute } = useChat();
+  const { huddles, stopHuddle, toggleHuddleMute, users } = useChat();
   const h = huddles[channelId];
 
   if (!h?.active) return null;
@@ -25,7 +38,11 @@ export default function HuddleBar({ channelId }: { channelId: string }) {
         <span className="font-semibold">Huddle</span>
         <span className="text-muted text-xs">#{channelId} · {mm}:{ss}</span>
         <div className="flex items-center gap-1">
-          {(h.members || []).map((n, i)=> <Avatar key={i} name={n} />)}
+          {(h.members || []).map((memberId, i) => {
+            const user = users[memberId];
+            const displayName = user?.name ?? memberId;
+            return <Avatar key={`${memberId}-${i}`} name={displayName} avatarUrl={user?.avatarUrl} />;
+          })}
         </div>
       </div>
       <div className="flex items-center gap-2">

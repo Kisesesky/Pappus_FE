@@ -75,4 +75,5 @@ export type PresenceState = "online" | "away" | "busy" | "offline";
 export type ChatUser = {
   id: string;
   name: string;
+  avatarUrl?: string;
 };

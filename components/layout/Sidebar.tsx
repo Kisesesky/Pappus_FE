@@ -11,6 +11,7 @@ import {
   FolderKanban,
   BookText,
   CalendarDays,
+  Users,
   ChevronDown,
   ChevronUp,
   ChevronLeft,
@@ -678,6 +679,12 @@ export default function Sidebar() {
               label="Worksheet"
               icon={Table}
               active={pathname?.startsWith("/worksheet")}
+            />
+            <NavItem
+              href="/members"
+              label="Members"
+              icon={Users}
+              active={pathname?.startsWith("/members")}
             />
             <ExpandableNav
               icon={MessageSquare}

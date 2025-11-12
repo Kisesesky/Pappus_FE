@@ -25,14 +25,14 @@ export default function CommandPalette() {
   const { show } = useToast();
 
   const commands: Command[] = useMemo(() => [
-    { id:"goto-chat", label:"Go to Chat", hint:"/app/chat", keywords:["채팅","chat"], run:()=>router.push("/app/chat") },
-    { id:"goto-issues", label:"Go to Issues (Kanban)", hint:"/app/issues", keywords:["이슈","칸반"], run:()=>router.push("/app/issues") },
-    { id:"goto-docs", label:"Go to Docs", hint:"/app/docs", keywords:["문서","docs"], run:()=>router.push("/app/docs") },
-    { id:"goto-calendar", label:"Go to Calendar", hint:"/app/calendar", keywords:["캘린더","calendar"], run:()=>router.push("/app/calendar") },
+    { id:"goto-chat", label:"Go to Chat", hint:"/chat", keywords:["채팅","chat"], run:()=>router.push("/chat") },
+    { id:"goto-issues", label:"Go to Issues (Kanban)", hint:"/issues", keywords:["이슈","칸반"], run:()=>router.push("/issues") },
+    { id:"goto-docs", label:"Go to Docs", hint:"/docs", keywords:["문서","docs"], run:()=>router.push("/docs") },
+    { id:"goto-calendar", label:"Go to Calendar", hint:"/calendar", keywords:["캘린더","calendar"], run:()=>router.push("/calendar") },
     {
       id:"new-issue", label:"New Issue…", hint:"Create issue modal",
       run:()=> {
-        if (!currentPath.startsWith("/app/issues")) router.push("/app/issues");
+        if (!currentPath.startsWith("/issues")) router.push("/issues");
         setTimeout(()=> window.dispatchEvent(new CustomEvent("open-new-issue-modal")), 200);
         show({ title:"Create Issue", description:"이슈 생성 모달을 열었습니다.", variant:"success" });
       }
@@ -79,13 +79,13 @@ export default function CommandPalette() {
 
   const goToSearchItem = (item: ReturnType<typeof searchAll>["results"][number]) => {
     if (item.type === "chat") {
-      router.push("/app/chat");
+      router.push("/chat");
       setTimeout(() => { useChat.getState().setChannel(item.channelId); }, 200);
     } else if (item.type === "issue") {
-      router.push("/app/issues");
+      router.push("/issues");
       setTimeout(() => { window.dispatchEvent(new CustomEvent("kanban:open-issue", { detail: { id: item.id } })); }, 200);
     } else if (item.type === "doc") {
-      router.push("/app/docs");
+      router.push("/docs");
       setTimeout(() => { window.dispatchEvent(new CustomEvent("docs:change-page", { detail: { id: item.id } })); }, 200);
     }
     setOpen(false); setQ("");

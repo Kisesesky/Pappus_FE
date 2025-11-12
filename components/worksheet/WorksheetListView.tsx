@@ -96,13 +96,13 @@ export default function WorksheetListView() {
 
   const handleOpen = (id: string) => {
     setActiveWorksheet(id);
-    router.push(`/app/worksheet/${id}`);
+    router.push(`/worksheet/${id}`);
   };
 
   const handleCreate = () => {
     const id = createWorksheet();
     setActiveWorksheet(id);
-    router.push(`/app/worksheet/${id}`);
+    router.push(`/worksheet/${id}`);
   };
 
   const resetFilters = () => {
