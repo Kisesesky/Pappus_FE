@@ -36,26 +36,26 @@ export const kanbanProductionStats: SummaryStat[] = [
 ];
 
 export const kanbanProductionRisks: ProductionRisk[] = [
-  { id: "risk-die-cut", title: "Die-cut delay", owner: "Floor lead", due: "02.27", severity: "high" },
-  { id: "risk-ink", title: "Ink shortage (Pantone 238)", owner: "Ink room", due: "02.26", severity: "medium" },
+  { id: "risk-die-cut", title: "Die-cut delay", owner: "Floor lead", due: "11.27", severity: "high" },
+  { id: "risk-ink", title: "Ink shortage (Pantone 238)", owner: "Ink room", due: "11.26", severity: "medium" },
 ];
 
 export const kanbanJobSheets: JobSheet[] = [
-  { id: "JS25-01", code: "JS25-01", name: "Cutting MO25-01", start: "02.20", end: "02.20", status: "completed" },
-  { id: "JS25-05", code: "JS25-05", name: "Cutting MO25-05", start: "02.27", end: "02.27", status: "in-progress" },
-  { id: "JS25-08", code: "JS25-08", name: "Cutting MO25-08", start: "02.25", end: "02.25", status: "delayed" },
+  { id: "JS25-01", code: "JS25-01", name: "Cutting MO25-01", start: "11.20", end: "11.20", status: "completed" },
+  { id: "JS25-05", code: "JS25-05", name: "Cutting MO25-05", start: "11.27", end: "11.27", status: "in-progress" },
+  { id: "JS25-08", code: "JS25-08", name: "Cutting MO25-08", start: "11.25", end: "11.25", status: "delayed" },
 ];
 
 export const kanbanPaintQueue: PaintJob[] = [
-  { id: "paint-premium-lid", name: "Premium lid", schedule: "02.25", colors: ["Pantone 238", "Pantone 485"], status: "mixing" },
-  { id: "paint-label-premium", name: "Label premium", schedule: "02.26", colors: ["Pantone 238"], status: "scheduled" },
+  { id: "paint-premium-lid", name: "Premium lid", schedule: "11.25", colors: ["Pantone 238", "Pantone 485"], status: "mixing" },
+  { id: "paint-label-premium", name: "Label premium", schedule: "11.26", colors: ["Pantone 238"], status: "scheduled" },
   { id: "paint-sleeve-coffee", name: "Sleeve coffee", schedule: "Done", colors: ["Pantone 238"], status: "ready" },
 ];
 
 export const kanbanSubcontracts: Subcontract[] = [
-  { id: "SC25-01", code: "SC25-01", name: "Gold foil", vendor: "Golden Finish", period: "02.25 ~ 02.27", status: "planned" },
-  { id: "SC25-02", code: "SC25-02", name: "Laser cutting", vendor: "Laser XYZ", period: "02.26 ~ 02.28", status: "in-progress" },
-  { id: "SC25-03", code: "SC25-03", name: "Bag sewing", vendor: "Minh Long", period: "02.24 ~ 03.01", status: "delayed" },
+  { id: "SC25-01", code: "SC25-01", name: "Gold foil", vendor: "Golden Finish", period: "11.25 ~ 11.27", status: "planned" },
+  { id: "SC25-02", code: "SC25-02", name: "Laser cutting", vendor: "Laser XYZ", period: "11.26 ~ 11.28", status: "in-progress" },
+  { id: "SC25-03", code: "SC25-03", name: "Bag sewing", vendor: "Minh Long", period: "11.24 ~ 12.01", status: "delayed" },
 ];
 
 export const kanbanMachines: Machine[] = [
@@ -71,7 +71,7 @@ export const kanbanResourceAlerts: ResourceAlert[] = [
     detail: "Three ink jobs on hold, check ETA.",
     severity: "critical",
     relatedNodeId: "wf-task-calibration",
-    dueDate: "2025-02-26",
+    dueDate: "2025-11-26",
   },
   {
     id: "alert-laser",
@@ -96,8 +96,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "initiative",
     title: "봄 출시 프로젝트",
     owner: "기획팀",
-    startDate: "2025-02-17",
-    endDate: "2025-03-10",
+    startDate: "2025-11-17",
+    endDate: "2025-11-10",
     progress: 0.58,
     status: "in-progress",
     dependencies: [],
@@ -111,8 +111,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "phase",
     title: "디자인 준비",
     owner: "디자인팀",
-    startDate: "2025-02-17",
-    endDate: "2025-02-23",
+    startDate: "2025-11-17",
+    endDate: "2025-11-23",
     progress: 0.72,
     status: "in-progress",
     dependencies: [],
@@ -125,8 +125,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "task",
     title: "라벨 스케치",
     owner: "서연",
-    startDate: "2025-02-17",
-    endDate: "2025-02-18",
+    startDate: "2025-11-17",
+    endDate: "2025-11-18",
     progress: 1,
     status: "done",
     dependencies: [],
@@ -139,14 +139,14 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "task",
     title: "색상 보정",
     owner: "민호",
-    startDate: "2025-02-19",
-    endDate: "2025-02-22",
+    startDate: "2025-11-19",
+    endDate: "2025-11-22",
     progress: 0.45,
     status: "at-risk",
     dependencies: ["wf-task-dielines"],
     resourceLoad: 0.6,
     assignments: [{ id: "assign-calib-1", assigneeId: "res-lan", assigneeName: "Lan Pham", role: "엔지니어", allocation: 0.7 }],
-    forecastEndDate: "2025-02-23",
+    forecastEndDate: "2025-11-23",
     riskNote: "잉크 입고 지연",
   }),
   createWorkflowNode({
@@ -155,8 +155,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "phase",
     title: "양산 준비",
     owner: "현장팀",
-    startDate: "2025-02-24",
-    endDate: "2025-03-08",
+    startDate: "2025-11-24",
+    endDate: "2025-12-08",
     progress: 0.38,
     status: "planned",
     dependencies: ["wf-phase-prepress"],
@@ -169,8 +169,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "task",
     title: "인쇄",
     owner: "민준",
-    startDate: "2025-02-24",
-    endDate: "2025-02-27",
+    startDate: "2025-11-24",
+    endDate: "2025-11-27",
     progress: 0.25,
     status: "planned",
     dependencies: ["wf-task-calibration"],
@@ -183,8 +183,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "task",
     title: "재단",
     owner: "현장팀",
-    startDate: "2025-02-28",
-    endDate: "2025-03-03",
+    startDate: "2025-11-28",
+    endDate: "2025-12-03",
     progress: 0.1,
     status: "planned",
     dependencies: ["wf-task-print"],
@@ -197,8 +197,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "task",
     title: "포장",
     owner: "QA팀",
-    startDate: "2025-03-04",
-    endDate: "2025-03-07",
+    startDate: "2025-12-04",
+    endDate: "2025-12-07",
     progress: 0.2,
     status: "blocked",
     dependencies: ["wf-task-diecut"],
@@ -212,8 +212,8 @@ export const kanbanWorkflowNodes: WorkflowNode[] = [
     kind: "milestone",
     title: "출고 점검",
     owner: "기획팀",
-    startDate: "2025-03-05",
-    endDate: "2025-03-05",
+    startDate: "2025-12-05",
+    endDate: "2025-12-05",
     progress: 0,
     status: "planned",
     dependencies: ["wf-task-packaging"],
@@ -235,12 +235,12 @@ export const kanbanHumanResources: HumanResource[] = [
 ];
 
 export const kanbanResourceLoads: ResourceLoadEntry[] = [
-  { assigneeId: "res-thien", date: "2025-02-20", workload: 7 },
-  { assigneeId: "res-thien", date: "2025-02-21", workload: 8 },
-  { assigneeId: "res-lan", date: "2025-02-22", workload: 9 },
-  { assigneeId: "res-ops", date: "2025-03-02", workload: 11 },
-  { assigneeId: "res-ops", date: "2025-03-03", workload: 10 },
-  { assigneeId: "res-qa", date: "2025-03-06", workload: 7 },
+  { assigneeId: "res-thien", date: "2025-11-20", workload: 7 },
+  { assigneeId: "res-thien", date: "2025-11-21", workload: 8 },
+  { assigneeId: "res-lan", date: "2025-11-22", workload: 9 },
+  { assigneeId: "res-ops", date: "2025-12-02", workload: 11 },
+  { assigneeId: "res-ops", date: "2025-12-03", workload: 10 },
+  { assigneeId: "res-qa", date: "2025-12-06", workload: 7 },
 ];
 
 export const kanbanWorkflowAlerts: WorkflowAlert[] = [
@@ -251,7 +251,7 @@ export const kanbanWorkflowAlerts: WorkflowAlert[] = [
     assigneeId: "res-lan",
     severity: "warning",
     description: "Lan Pham is overallocated (120%) on Feb 22.",
-    timestamp: "2025-02-21T09:00:00Z",
+    timestamp: "2025-11-21T09:00:00Z",
   },
   {
     id: "wf-alert-2",
@@ -259,7 +259,7 @@ export const kanbanWorkflowAlerts: WorkflowAlert[] = [
     nodeId: "wf-task-packaging",
     severity: "critical",
     description: "Packaging run likely to slip by three days.",
-    timestamp: "2025-03-02T12:00:00Z",
+    timestamp: "2025-12-02T12:00:00Z",
   },
 ];
 
@@ -268,10 +268,10 @@ export const kanbanWorkflowHistory: WorkflowHistoryEntry[] = [
     id: "hist-1",
     nodeId: "wf-task-calibration",
     author: "Lan Pham",
-    timestamp: "2025-02-20T08:00:00Z",
+    timestamp: "2025-11-20T08:00:00Z",
     summary: "Calibration shifted by +1 day due to ink delay.",
     changes: [
-      { field: "endDate", from: "2025-02-22", to: "2025-02-23" },
+      { field: "endDate", from: "2025-11-22", to: "2025-11-23" },
       { field: "status", from: "planned", to: "at-risk" },
     ],
   },
@@ -279,7 +279,7 @@ export const kanbanWorkflowHistory: WorkflowHistoryEntry[] = [
     id: "hist-2",
     nodeId: "wf-task-print",
     author: "Press team",
-    timestamp: "2025-02-24T12:00:00Z",
+    timestamp: "2025-11-24T12:00:00Z",
     summary: "Print kickoff confirmed.",
     changes: [{ field: "status", from: "planned", to: "in-progress" }],
   },
@@ -287,7 +287,7 @@ export const kanbanWorkflowHistory: WorkflowHistoryEntry[] = [
     id: "hist-3",
     nodeId: "wf-task-packaging",
     author: "QA pod",
-    timestamp: "2025-03-01T09:30:00Z",
+    timestamp: "2025-12-01T09:30:00Z",
     summary: "Blocked awaiting die-cut QA samples.",
     changes: [{ field: "status", from: "planned", to: "blocked" }],
   },
@@ -297,14 +297,14 @@ export const kanbanReminders: Reminder[] = [
   {
     id: "rem-1",
     nodeId: "wf-milestone-pilot",
-    dueDate: "2025-03-05",
+    dueDate: "2025-12-05",
     message: "Pilot shipment dry-run",
     status: "pending",
   },
   {
     id: "rem-2",
     nodeId: "wf-task-packaging",
-    dueDate: "2025-03-04",
+    dueDate: "2025-12-04",
     message: "QA packaging review",
     status: "sent",
   },
