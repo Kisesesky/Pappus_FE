@@ -168,9 +168,9 @@ export const useMembers = create<MemberStore>((set, get) => ({
       const invites = state.invites.filter((item) => item.id !== inviteId);
       const members = { ...state.members, [memberId]: member };
       const memberIds = [memberId, ...state.memberIds];
-      const presence = {
+      const presence: Record<string, MemberPresence> = {
         ...state.presence,
-        [memberId]: { memberId, status: "online", lastSeenAt: now },
+        [memberId]: { memberId, status: "online" as PresenceStatus, lastSeenAt: now },
       };
       persistMembers(members, memberIds);
       persistInvites(invites);
@@ -232,7 +232,7 @@ export const useMembers = create<MemberStore>((set, get) => ({
             [memberId]: { ...state.members[memberId], lastActiveAt: now },
           }
         : state.members;
-      const presence = {
+      const presence: Record<string, MemberPresence> = {
         ...state.presence,
         [memberId]: { memberId, status, lastSeenAt: now },
       };
@@ -267,7 +267,7 @@ export const useMembers = create<MemberStore>((set, get) => ({
       let dirty = false;
       Object.entries(presence).forEach(([memberId, record]) => {
         if (record.lastSeenAt < threshold && record.status === "online") {
-          presence[memberId] = { ...record, status: "away" };
+          presence[memberId] = { ...record, status: "away" as PresenceStatus };
           dirty = true;
         }
       });
