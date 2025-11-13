@@ -1,4 +1,6 @@
 // lib/search.ts
+import { DOC_CONTENT_PREFIX, readDocCollection } from "@/lib/docs";
+
 export type SearchResult =
   | { type: "chat"; id: string; channelId: string; author: string; text: string; ts: number }
   | { type: "issue"; id: string; title: string; status: "todo" | "doing" | "done"; labels?: string[]; due?: string }
@@ -7,12 +9,6 @@ export type SearchResult =
 const CHAT_CHANNELS_KEY = "fd.chat.channels";
 const CHAT_MSGS_KEY = (id: string) => `fd.chat.messages:${id}`;
 const KANBAN_KEY = "fd.kanban.board";
-const DOC_PREFIX = "fd.docs.content:";
-const PAGE_TITLES: Record<string,string> = {
-  spec: "Product Spec",
-  design: "Design Notes",
-  sprint: "Sprint Plan",
-};
 
 function safeKeys(): string[] {
   if (typeof window === "undefined") return [];
@@ -53,14 +49,16 @@ export function getKanbanIndex(): SearchResult[] {
 
 export function getDocsIndex(): SearchResult[] {
   if (typeof window === "undefined") return [];
-  const keys = safeKeys().filter(k => k.startsWith(DOC_PREFIX));
+  const keys = safeKeys().filter(k => k.startsWith(DOC_CONTENT_PREFIX));
   const out: SearchResult[] = [];
+  const meta = readDocCollection();
+  const titleMap = new Map(meta.map((doc) => [doc.id, doc.title]));
   keys.forEach(k => {
-    const id = k.slice(DOC_PREFIX.length);
+    const id = k.slice(DOC_CONTENT_PREFIX.length);
     const html = localStorage.getItem(k) || "";
     const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
     const snippet = text.slice(0, 160);
-    out.push({ type:"doc", id, title: PAGE_TITLES[id] || id, snippet });
+    out.push({ type:"doc", id, title: titleMap.get(id) || id, snippet });
   });
   return out;
 }

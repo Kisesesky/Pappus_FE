@@ -60,6 +60,7 @@ import { Node as TiptapNode, mergeAttributes } from "@tiptap/core";
 
 // ✅ TipTap 컨텍스트: DocsRightPanel이 editor를 읽도록 공급
 import { DocEditorProvider } from "@/components/docs/DocEditorContext";
+import { DOC_CONTENT_KEY, DOC_SNAPSHOT_KEY, getDocMetaById, touchDocMeta, updateDocMeta } from "@/lib/docs";
 
 /* =========================================================================
    타입 보강: 커스텀 커맨드(attachment, uploadPlaceholder) & table 명세
@@ -102,12 +103,6 @@ lowlight.register("html", html);
 lowlight.register("js", js);
 lowlight.register("ts", ts);
 lowlight.register("md", md);
-
-/* ────────────────────────────────────────────────────────────────────── */
-/* LocalStorage 키                                                         */
-/* ────────────────────────────────────────────────────────────────────── */
-const LS_KEY = (id: string) => `fd.docs.content:${id}`;
-const SNAPSHOTS_KEY = (id: string) => `fd.docs.snapshots:${id}`;
 
 /* ────────────────────────────────────────────────────────────────────── */
 /* 업로드·스냅샷 정책                                                     */
@@ -395,14 +390,18 @@ function fileToDataUrl(file: File, onProgress?: (p:number)=>void): Promise<strin
 /* ────────────────────────────────────────────────────────────────────── */
 /* 컴포넌트                                                              */
 /* ────────────────────────────────────────────────────────────────────── */
-export default function DocView() {
-  const [pageId, setPageId] = useState<string>("spec");
+export default function DocView({ initialPageId }: { initialPageId?: string } = {}) {
+  const [pageId, setPageId] = useState<string>(initialPageId || "spec");
 
   useEffect(() => {
+    if (initialPageId) {
+      setPageId(initialPageId);
+      return;
+    }
     if (typeof window === "undefined") return;
     const saved = window.localStorage.getItem("fd.docs.active");
     if (saved) setPageId(saved);
-  }, []);
+  }, [initialPageId]);
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashPos, setSlashPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [histOpen, setHistOpen] = useState(false);
@@ -422,20 +421,11 @@ export default function DocView() {
   // 자동 스냅샷 상태
   const lastAutoRef = useRef<{ ts: number; len: number }>({ ts: 0, len: 0 });
 
-  useEffect(() => {
-    const onChangePage = (e: Event) => {
-      const { id } = (e as CustomEvent<{ id: string }>).detail;
-      setPageId(id);
-    };
-    window.addEventListener("docs:change-page", onChangePage as any);
-    return () => window.removeEventListener("docs:change-page", onChangePage as any);
-  }, []);
-
   const content = useMemo(() => {
     if (typeof window === "undefined")
       return "<h1>문서 제목</h1><p>블록 기반 에디팅 시작!</p>";
     return (
-      localStorage.getItem(LS_KEY(pageId)) ||
+      localStorage.getItem(DOC_CONTENT_KEY(pageId)) ||
       "<h1>문서 제목</h1><p>블록 기반 에디팅 시작!</p>"
     );
   }, [pageId]);
@@ -443,18 +433,16 @@ export default function DocView() {
   // 테이블 확장 존재 여부
   const hasTable = Boolean(Table && (Table as any).configure);
   const pageTitle = useMemo(() => {
-    const preset: Record<string, string> = {
-      spec: "제품 스펙 문서",
-      retro: "스프린트 회고",
-      roadmap: "제품 로드맵",
-    };
+    const meta = getDocMetaById(pageId);
+    if (meta?.title) return meta.title;
     const fallback = pageId ? pageId.charAt(0).toUpperCase() + pageId.slice(1) : "문서";
-    return preset[pageId] ?? fallback;
+    return fallback;
   }, [pageId]);
 useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("fd.docs.active", pageId);
     window.dispatchEvent(new CustomEvent("docs:active-page", { detail: { id: pageId } }));
+    updateDocMeta(pageId, { lastOpenedAt: new Date().toISOString() });
   }, [pageId]);
 
   const editor = useEditor(
@@ -496,7 +484,8 @@ useEffect(() => {
       onUpdate({ editor }) {
         if (typeof window !== "undefined") {
           const html = editor.getHTML();
-          localStorage.setItem(LS_KEY(pageId), html);
+          localStorage.setItem(DOC_CONTENT_KEY(pageId), html);
+          touchDocMeta(pageId);
           // 자동 스냅샷 조건
           const now = Date.now();
           const len = html.length;
@@ -620,13 +609,13 @@ useEffect(() => {
   /* ── 스냅샷(버전) ───────────────────────────────────────────── */
   type Snapshot = { id: string; ts: number; html: string; note: string };
   const loadSnapshots = (): Snapshot[] => {
-    const raw = localStorage.getItem(SNAPSHOTS_KEY(pageId));
+    const raw = localStorage.getItem(DOC_SNAPSHOT_KEY(pageId));
     const list: Snapshot[] = raw ? JSON.parse(raw) : [];
     // 날짜 기반 보존 + 개수 컷
     const cutoff = Date.now() - SNAPSHOT_RETENTION_DAYS * 24 * 60 * 60 * 1000;
     const pruned = list.filter(s => s.ts >= cutoff).slice(-SNAPSHOT_RETENTION);
     if (pruned.length !== list.length) {
-      localStorage.setItem(SNAPSHOTS_KEY(pageId), JSON.stringify(pruned));
+      localStorage.setItem(DOC_SNAPSHOT_KEY(pageId), JSON.stringify(pruned));
       return pruned;
     }
     return list.slice(-SNAPSHOT_RETENTION);
@@ -634,7 +623,7 @@ useEffect(() => {
   const saveSnapshots = (list: Snapshot[]) => {
     const cutoff = Date.now() - SNAPSHOT_RETENTION_DAYS * 24 * 60 * 60 * 1000;
     const pruned = list.filter(s => s.ts >= cutoff).slice(-SNAPSHOT_RETENTION);
-    localStorage.setItem(SNAPSHOTS_KEY(pageId), JSON.stringify(pruned));
+    localStorage.setItem(DOC_SNAPSHOT_KEY(pageId), JSON.stringify(pruned));
   };
 
   const manualSaveSnapshot = () => {
@@ -654,9 +643,10 @@ useEffect(() => {
   };
   const restoreSnapshot = (snap: Snapshot) => {
     editor?.commands.setContent(snap.html); // 불필요한 2번째 인자 제거(타입 충돌 방지)
-    localStorage.setItem(LS_KEY(pageId), snap.html);
+    localStorage.setItem(DOC_CONTENT_KEY(pageId), snap.html);
     lastAutoRef.current = { ts: Date.now(), len: snap.html.length };
     setHistOpen(false);
+    touchDocMeta(pageId);
   };
   const deleteSnapshot = (id: string) => {
     const next = loadSnapshots().filter(s => s.id !== id);

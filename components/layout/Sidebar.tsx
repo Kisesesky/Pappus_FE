@@ -504,17 +504,9 @@ export default function Sidebar() {
     setActiveDocId(id);
     if (typeof window !== "undefined") {
       window.localStorage.setItem("fd.docs.active", id);
-      const emit = () => window.dispatchEvent(new CustomEvent("docs:change-page", { detail: { id } }));
-      if (pathname?.startsWith("/docs")) {
-        emit();
-      } else {
-        window.setTimeout(emit, 80);
-      }
     }
-    if (!pathname?.startsWith("/docs")) {
-      router.push("/docs");
-    }
-  }, [pathname, router]);
+    router.push(`/docs/${id}`);
+  }, [router]);
 
   const handleOpenWorkspaceSettings = useCallback(() => {
     setWorkspaceSettingsOpen(true);

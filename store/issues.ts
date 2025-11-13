@@ -13,7 +13,7 @@ import {
   kanbanWorkflowAlerts,
   kanbanWorkflowHistory,
   kanbanReminders,
-} from "@mocks/kanban";
+} from "@/lib/mocks/kanban";
 import {
   EntityState,
   JobSheet,

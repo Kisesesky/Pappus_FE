@@ -54,13 +54,21 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
     setSidebarOpen(false);
   }, [pathname]);
 
+  const showDocTools = pathname?.startsWith("/docs/") ?? false;
+
   return (
     <ToastProvider>
       <AppShell
         header={<Topbar />}
         sidebar={<Sidebar />}
-        rightPanel={<div className="hidden md:block"><DocsRightPanel /></div>}
-        rightWidth={380}
+        rightPanel={
+          showDocTools ? (
+            <div className="hidden md:block">
+              <DocsRightPanel />
+            </div>
+          ) : null
+        }
+        rightWidth={showDocTools ? 380 : undefined}
       >
         {children}
       </AppShell>
@@ -69,17 +77,21 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
         <Sidebar />
       </Drawer>
 
-      <Drawer open={open} onOpenChange={setOpen} title="Outline / History">
-        <DocsRightPanel />
-      </Drawer>
+      {showDocTools && (
+        <>
+          <Drawer open={open} onOpenChange={setOpen} title="Outline / History">
+            <DocsRightPanel />
+          </Drawer>
 
-      <button
-        className="md:hidden fixed bottom-4 right-4 z-40 rounded-full border border-border bg-panel shadow-panel px-4 py-2 text-sm"
-        onClick={() => setOpen(true)}
-        aria-label="Open docs right panel"
-      >
-        Outline / History
-      </button>
+          <button
+            className="md:hidden fixed bottom-4 right-4 z-40 rounded-full border border-border bg-panel shadow-panel px-4 py-2 text-sm"
+            onClick={() => setOpen(true)}
+            aria-label="Open docs right panel"
+          >
+            Outline / History
+          </button>
+        </>
+      )}
     </ToastProvider>
   );
 }

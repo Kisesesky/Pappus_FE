@@ -85,8 +85,10 @@ export default function CommandPalette() {
       router.push("/issues");
       setTimeout(() => { window.dispatchEvent(new CustomEvent("kanban:open-issue", { detail: { id: item.id } })); }, 200);
     } else if (item.type === "doc") {
-      router.push("/docs");
-      setTimeout(() => { window.dispatchEvent(new CustomEvent("docs:change-page", { detail: { id: item.id } })); }, 200);
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("fd.docs.active", item.id);
+      }
+      router.push(`/docs/${item.id}`);
     }
     setOpen(false); setQ("");
   };
