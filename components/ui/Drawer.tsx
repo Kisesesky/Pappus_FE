@@ -1,5 +1,5 @@
-// components/ui/Drawer.tsx
 'use client';
+
 import React, { useEffect, useRef, useState } from 'react';
 import clsx from 'clsx';
 
@@ -10,6 +10,7 @@ type DrawerProps = {
   width?: number;
   title?: string;
   side?: 'left' | 'right';
+  headerContent?: (close: () => void) => React.ReactNode;
 };
 
 export default function Drawer({
@@ -19,6 +20,7 @@ export default function Drawer({
   width = 380,
   title = 'Details',
   side = 'right',
+  headerContent,
 }: DrawerProps) {
   const [dragDistance, setDragDistance] = useState(0);
   const startX = useRef<number | null>(null);
@@ -75,6 +77,20 @@ export default function Drawer({
     ? (isRight ? dragDistance : -dragDistance)
     : (isRight ? hiddenOffset : -hiddenOffset);
 
+  const renderHeader = headerContent
+    ? headerContent(() => onOpenChange(false))
+    : (
+      <>
+        <div className="font-medium">{title}</div>
+        <button
+          className="text-sm text-muted hover:text-foreground"
+          onClick={() => onOpenChange(false)}
+        >
+          Close
+        </button>
+      </>
+    );
+
   return (
     <div className={clsx('fixed inset-0 z-50 md:hidden', open ? 'pointer-events-auto' : 'pointer-events-none')}>
       <div
@@ -93,8 +109,7 @@ export default function Drawer({
         }}
       >
         <div className="flex h-12 items-center justify-between border-b border-border px-4">
-          <div className="font-medium">{title}</div>
-          <button className="text-sm text-muted hover:text-foreground" onClick={() => onOpenChange(false)}>�ݱ�</button>
+          {renderHeader}
         </div>
         <div className="h-[calc(100%-48px)] overflow-auto">
           {children}

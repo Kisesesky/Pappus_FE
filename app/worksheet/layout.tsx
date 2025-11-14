@@ -4,12 +4,15 @@ import React, { useEffect, useState } from 'react';
 import AppShell from '@/components/layout/AppShell';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
+import MobileNavHeader from '@/components/layout/MobileNavHeader';
 import { ToastProvider } from '@/components/ui/Toast';
 import Drawer from '@/components/ui/Drawer';
 import { usePathname } from 'next/navigation';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 
 export default function WorksheetLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarCollapse();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -32,11 +35,22 @@ export default function WorksheetLayout({ children }: { children: React.ReactNod
 
   return (
     <ToastProvider>
-      <AppShell header={<Topbar />} sidebar={<Sidebar />}>
+      <AppShell
+        header={<Topbar />}
+        sidebar={<Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(prev => !prev)} />}
+        sidebarWidth={sidebarCollapsed ? 80 : 288}
+      >
         {children}
       </AppShell>
 
-      <Drawer open={sidebarOpen} onOpenChange={setSidebarOpen} title="Navigation" width={320} side="left">
+      <Drawer
+        open={sidebarOpen}
+        onOpenChange={setSidebarOpen}
+        title="Navigation"
+        width={320}
+        side="left"
+        headerContent={(close) => <MobileNavHeader onClose={close} />}
+      >
         <Sidebar />
       </Drawer>
     </ToastProvider>

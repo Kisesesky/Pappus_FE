@@ -108,6 +108,14 @@ bun dev
 │  ├─dashboard/                      ├─ # 대시보드 뷰 컴포넌트 모음
 │  │  └─DashboardView.tsx            │  └─ # 대시보드 주 뷰 컴포넌트
 │  ├─docs/                           ├─ # 문서 편집/관리 관련 UI 컴포넌트
+│  │  ├─note-drive/                  │  ├─ # 
+│  │  │  ├─CreateFolderModal.tsx     │  │  ├─ # 
+│  │  │  ├─DocumentGrid.tsx          │  │  ├─ # 
+│  │  │  ├─DocumentTable.tsx         │  │  ├─ # 
+│  │  │  ├─FilterMenu.tsx            │  │  ├─ # 
+│  │  │  ├─FolderGrid.tsx            │  │  ├─ # 
+│  │  │  ├─SortMenu.tsx              │  │  ├─ # 
+│  │  │  └─utils.ts                  │  │  └─ # 
 │  │  ├─DocEditorContext.tsx         │  ├─ # TipTap 문서 에디터 컨텍스트
 │  │  ├─DocDashboard.tsx             │  ├─ # 문서 대시보드
 │  │  ├─DocsRightPanel.tsx           │  ├─ # 문서 오른쪽 패널 (버전/댓글 등)
@@ -135,6 +143,7 @@ bun dev
 │  │  └─SprintStats.tsx              │  └─ # 스프린트 진행 현황 컴포넌트
 │  ├─layout/                         ├─ # 공통 레이아웃 컴포넌트
 │  │  ├─AppShell.tsx                 │  ├─ # 앱의 기본 틀, 레이아웃 래퍼
+│  │  ├─MobileNavHeader.tsx          │  ├─ # 
 │  │  ├─Sidebar.tsx                  │  ├─ # 좌측 워크스페이스 및 채널 목록 사이드바
 │  │  └─Topbar.tsx                   │  └─ # 상단 검색, 알림, 명령 팔레트 영역
 │  ├─members/                        ├─ # 멤버 관리 관련 UI 컴포넌트
@@ -166,6 +175,9 @@ bun dev
 ├─docs/                              # 문서 관련 정리 및 가이드 파일들
 │  └─ ...                            └─ # 상세문서는 직접 읽을수 있도록
 │
+├─hooks/                             # 
+│  └─useSidebarCollapse.ts           └─ # 
+│
 ├─lib/                               # 각종 유틸리티 및 헬퍼 함수 모음
 │  ├─calendar/                       ├─ # 캘린더 관련 유틸 함수
 │  │  └─utils.ts                     │  └─ # 일정 계산, 날짜 포맷팅 등
@@ -178,6 +190,8 @@ bun dev
 │  │  └─worksheet.ts                 │  └─ # 워크시트 테스트용 데이터
 │  ├─api.ts                          ├─ # API 호출 함수 모음
 │  ├─commands.ts                     ├─ # 명령 관련 헬퍼 및 함수
+│  ├─dashboardBackground.ts          ├─ # 
+│  ├─docs.ts                         ├─ # 
 │  ├─kanbanHistory.ts                ├─ # Kanban 보드 히스토리 처리 관련 함수
 │  ├─persist.ts                      ├─ # 로컬 저장소(로컬스토리지 등) 처리 함수
 │  ├─realtime.ts                     ├─ # 실시간 동기화 및 Presence 관련 유팅

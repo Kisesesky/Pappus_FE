@@ -8,10 +8,11 @@ type AppShellProps = {
   sidebar?: React.ReactNode;
   header?: React.ReactNode;
   children: React.ReactNode;
-  rightPanel?: React.ReactNode | null; // ?????? ??? (????? ?? ???)
-  rightWidth?: number; // px
+  rightPanel?: React.ReactNode | null;
+  rightWidth?: number;
   className?: string;
   mainScrollable?: boolean;
+  sidebarWidth?: number;
 };
 
 export default function AppShell({
@@ -22,6 +23,7 @@ export default function AppShell({
   rightWidth = 360,
   className,
   mainScrollable = true,
+  sidebarWidth = 288,
 }: AppShellProps) {
   const hasRight = !!rightPanel;
 
@@ -40,7 +42,10 @@ export default function AppShell({
 
       <div className="flex flex-1 min-h-0 flex-col overflow-hidden md:flex-row">
         {sidebar && (
-          <aside className="hidden shrink-0 min-h-0 overflow-y-auto border-r border-border bg-panel shadow-panel md:flex md:w-72 md:flex-col">
+          <aside
+            className="hidden shrink-0 min-h-0 overflow-y-auto border-r border-border bg-panel shadow-panel md:flex md:flex-col"
+            style={{ width: sidebarWidth }}
+          >
             {sidebar}
           </aside>
         )}

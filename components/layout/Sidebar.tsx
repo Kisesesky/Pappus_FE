@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useCallback, useState, useRef } from "react";
 import type { ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -25,9 +26,15 @@ import {
   Table,
   Check,
   Trash2,
+  LifeBuoy,
 } from "lucide-react";
 import clsx from "clsx";
 import { useChat } from "@/store/chat";
+
+type SidebarProps = {
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+};
 
 type NavItemProps = {
   href: string;
@@ -53,6 +60,14 @@ const NavItem = ({ href, label, icon: Icon, active = false }: NavItemProps) => (
 
 const DEFAULT_WORKSPACE_BG = "#0EA5E9";
 const VISIBLE_CHAT_GROUPS: ChatGroupKey[] = ["starred", "channels"];
+
+const PRIMARY_NAV = [
+  { href: "/chat", label: "Chat", icon: MessageSquare },
+  { href: "/issues", label: "Issues", icon: FolderKanban },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/members", label: "Members", icon: Users },
+  { href: "/docs", label: "Note", icon: BookText },
+];
 
 const normalizeIconValue = (value?: string) => {
   if (!value) return "";
@@ -256,7 +271,7 @@ function ChannelRow({
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps = {}) {
   const {
     channels,
     allChannels,
@@ -475,6 +490,9 @@ export default function Sidebar() {
       return changed ? next : prev;
     });
   }, [chatExpanded, sectionMeta, toggleSectionCollapsed]);
+  if (collapsed) {
+    return <CollapsedSidebar pathname={pathname} onToggleCollapse={onToggleCollapse} />;
+  }
 
   const handleNavigateDocs = useCallback(() => {
     if (!pathname?.startsWith("/docs")) {
@@ -532,6 +550,33 @@ export default function Sidebar() {
 
   return (
     <div className="flex min-h-0 w-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-4">
+        <div className="flex items-center gap-3">
+          <Image
+            src="/logo.png"
+            alt="Fourier logo"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-md object-cover"
+            priority
+          />
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold">FOURIER</span>
+            <span className="text-[11px] uppercase tracking-[0.12em] text-muted">Workspace</span>
+          </div>
+        </div>
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="rounded-md p-2 text-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            aria-label="Collapse sidebar"
+          >
+            <ChevronLeft size={16} />
+          </button>
+        )}
+      </div>
+
       <div className="border-b border-sidebar-border px-3 py-4">
         <div className="flex items-center gap-3">
           <div
@@ -766,8 +811,14 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <div className="p-3 border-t border-border text-xs text-muted">
-        ⌘K Command Palette / v0.1
+      <div className="p-3 border-t border-border space-y-3">
+        <a
+          href="mailto:support@fourier.app"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-3 py-2 text-sm font-medium text-sidebar-foreground transition hover:bg-sidebar-accent"
+        >
+          <LifeBuoy size={16} /> 고객센터
+        </a>
+        <p className="text-xs text-muted">⌘K Command Palette / v0.1</p>
       </div>
 
       <Dialog.Root open={workspaceSettingsOpen} onOpenChange={setWorkspaceSettingsOpen}>
@@ -874,3 +925,71 @@ export default function Sidebar() {
     </div>
   );
 }
+
+type CollapsedSidebarProps = {
+  pathname: string | null;
+  onToggleCollapse?: () => void;
+};
+
+function CollapsedSidebar({ pathname, onToggleCollapse }: CollapsedSidebarProps) {
+  return (
+    <div className="flex h-full flex-col items-center justify-between gap-4 border-r border-sidebar-border bg-sidebar py-4 text-sidebar-foreground">
+      <div className="flex flex-col items-center gap-3">
+        <Image
+          src="/logo.png"
+          alt="Fourier logo"
+          width={36}
+          height={36}
+          className="h-9 w-9 rounded-md object-cover"
+          priority
+        />
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="rounded-full border border-border p-1 text-muted hover:text-sidebar-foreground"
+          aria-label="Expand sidebar"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
+      <nav className="flex flex-1 flex-col items-center gap-3">
+        {PRIMARY_NAV.map((item) => {
+          const Icon = item.icon;
+          const active = pathname?.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.label}
+              className={clsx(
+                'flex h-11 w-11 items-center justify-center rounded-xl text-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground',
+                active && 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
+              )}
+            >
+              <Icon size={18} />
+            </Link>
+          );
+        })}
+      </nav>
+
+      <a
+        href="mailto:support@fourier.app"
+        className="flex h-11 w-11 items-center justify-center rounded-xl border border-border text-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        title="고객센터"
+      >
+        <LifeBuoy size={18} />
+      </a>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+
+
