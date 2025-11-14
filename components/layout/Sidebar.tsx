@@ -758,7 +758,7 @@ export default function Sidebar() {
             >
               <span className="flex items-center gap-2">
                 <BookText size={16} />
-                Docs
+                Note
               </span>
               <ChevronRight size={16} className="text-muted" />
             </button>

@@ -1,0 +1,191 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ElementType } from 'react';
+import { useRouter } from 'next/navigation';
+import { CalendarClock, Clock3, LayoutGrid, List as ListIcon, Star, Upload, Users } from 'lucide-react';
+
+import {
+  DOC_FOLDER_EVENT,
+  DocFolder,
+  DocMeta,
+  addDocMeta,
+  assignDocToFolder,
+  createDocFolder,
+  deleteDocFolder,
+  generateDocId,
+  nextUntitledName,
+  persistDocCollection,
+  readDocCollection,
+  readDocFolders,
+  removeDocMeta,
+  updateDocFolder,
+  updateDocMeta,
+} from '@/lib/docs';
+import { DocumentGrid } from '@/components/docs/note-drive/DocumentGrid';
+import { DocumentTable, type SortKey } from '@/components/docs/note-drive/DocumentTable';
+import { FolderGrid } from '@/components/docs/note-drive/FolderGrid';
+import { FilterMenu } from '@/components/docs/note-drive/FilterMenu';
+import { SortMenu } from '@/components/docs/note-drive/SortMenu';
+import { CreateFolderModal } from '@/components/docs/note-drive/CreateFolderModal';
+import { formatFileSize, relativeTime } from '@/components/docs/note-drive/utils';
+
+type FilterKey = 'all' | 'starred' | 'shared' | 'recent';
+
+const FILTERS: { key: FilterKey; label: string; icon: ElementType; hint: string }[] = [
+  { key: 'all', label: '전체 문서', icon: LayoutGrid, hint: '모든 문서' },
+  { key: 'starred', label: '중요', icon: Star, hint: '즐겨찾기 문서' },
+  { key: 'shared', label: '공유됨', icon: Users, hint: '공유 문서' },
+  { key: 'recent', label: '최근 수정', icon: Clock3, hint: '24시간 이내 수정' },
+];
+
+const FILTER_CHIPS = [
+  { id: 'type', label: '유형' },
+  { id: 'person', label: '사람' },
+  { id: 'modified', label: '수정 날짜' },
+  { id: 'source', label: '출처' },
+] as const;
+
+const CHIP_OPTIONS: Record<(typeof FILTER_CHIPS)[number]['id'], { value: string; label: string }[]> = {
+  type: [
+    { value: 'all', label: '모든 유형' },
+    { value: 'doc', label: '노트' },
+    { value: 'template', label: '템플릿' },
+  ],
+  person: [
+    { value: 'all', label: '모든 사람' },
+    { value: 'mine', label: '내가 소유' },
+    { value: 'shared', label: '공유됨' },
+  ],
+  modified: [
+    { value: 'anytime', label: '전체 기간' },
+    { value: '7days', label: '지난 7일' },
+    { value: '30days', label: '지난 30일' },
+  ],
+  source: [
+    { value: 'all', label: '모든 출처' },
+    { value: 'workspace', label: '워크스페이스' },
+    { value: 'imported', label: '가져온 문서' },
+  ],
+};
+
+export default function DocsDashboard() {
+  const router = useRouter();
+  const [docs, setDocs] = useState<DocMeta[]>(() => readDocCollection());
+  const [folders, setFolders] = useState<DocFolder[]>(() => readDocFolders());
+  const [activeFolder, setActiveFolder] = useState<'all' | 'unfiled' | string>('all');
+  const [filter, setFilter] = useState<FilterKey>('all');
+  const [query, setQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [sortKey, setSortKey] = useState<SortKey>('title');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [chipSelections, setChipSelections] = useState<Record<string, string>>({
+    type: CHIP_OPTIONS.type[0].value,
+    person: CHIP_OPTIONS.person[0].value,
+    modified: CHIP_OPTIONS.modified[0].value,
+    source: CHIP_OPTIONS.source[0].value,
+  });
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+
+  useEffect(() => {
+    const syncDocs = () => setDocs(readDocCollection());
+    const handler = () => syncDocs();
+    window.addEventListener('docs:meta-updated', handler);
+    syncDocs();
+    return () => window.removeEventListener('docs:meta-updated', handler);
+  }, []);
+
+  useEffect(() => {
+    const syncFolders = () => setFolders(readDocFolders());
+    const handler = () => syncFolders();
+    window.addEventListener(DOC_FOLDER_EVENT, handler as EventListener);
+    syncFolders();
+    return () => window.removeEventListener(DOC_FOLDER_EVENT, handler as EventListener);
+  }, []);
+
+  useEffect(() => {
+    if (activeFolder === 'all' || activeFolder === 'unfiled') return;
+    if (!folders.some((folder) => folder.id === activeFolder)) {
+      setActiveFolder('all');
+    }
+  }, [folders, activeFolder]);
+
+  const folderMap = useMemo(() => {
+    const map = new Map<string, DocFolder>();
+    folders.forEach((folder) => map.set(folder.id, folder));
+    return map;
+  }, [folders]);
+
+  const docCountsByFolder = useMemo(() => {
+    const counts = new Map<string, number>();
+    docs.forEach((doc) => {
+      const folderId = resolveFolderId(doc, folders);
+      const key = folderId ?? 'unfiled';
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    });
+    return counts;
+  }, [docs, folders]);
+
+  const breadcrumbs = useMemo(() => {
+    const trail = ['내 드라이브'];
+    if (activeFolder === 'unfiled') {
+      trail.push('미분류 노트');
+    } else if (activeFolder !== 'all') {
+      const target = folderMap.get(activeFolder);
+      if (target) trail.push(target.name);
+    }
+    return trail;
+  }, [activeFolder, folderMap]);
+
+  const applyCollection = useCallback((updater: (list: DocMeta[]) => DocMeta[]) => {
+    setDocs((prev) => {
+      const next = updater(prev);
+      persistDocCollection(next);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('docs:meta-updated', { detail: { action: 'update' } }));
+      }
+      return next;
+    });
+  }, []);
+
+  const handleCreateDoc = () => {
+    const id = generateDocId();
+    const title = nextUntitledName(docs);
+    const currentFolder =
+      activeFolder !== 'all' && activeFolder !== 'unfiled' ? folderMap.get(activeFolder) : undefined;
+    const doc: DocMeta = {
+      id,
+      title,
+      owner: '나',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      description: '새 Flowdash 노트',
+      color: pickColor(docs.length),
+      icon: '📄',
+      sharedWith: 0,
+      folderId: currentFolder?.id,
+      location: currentFolder ? `${currentFolder.name} / ${title}` : `내 드라이브 / ${title}`,
+      fileSize: 120,
+    };
+    const created = addDocMeta(doc);
+    setDocs((prev) => [created, ...prev.filter((item) => item.id !== created.id)]);
+    router.push(`/docs/${created.id}`);
+  };
+
+  const handleDuplicate = (doc: DocMeta) => {
+    const duplicated: DocMeta = {
+      ...doc,
+      id: generateDocId(),
+      title: `${doc.title} 복제본`,
+      starred: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastOpenedAt: undefined,
+    };
+    const created = addDocMeta(duplicated);
+    setDocs((prev) => [created, ...prev]);
+  };
+
+  const handleRename = (doc: DocMeta) => {
+    const name = window.prompt('문서 이름을 입력하세요', doc.title);
+

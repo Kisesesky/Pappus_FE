@@ -8,6 +8,7 @@ declare module '@tiptap/extension-table';
 declare module '@tiptap/extension-table-row';
 declare module '@tiptap/extension-table-cell';
 declare module '@tiptap/extension-table-header';
+declare module 'lucide-react';
 
 export {};
 

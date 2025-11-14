@@ -16,17 +16,67 @@ export type DocMeta = {
   color?: string;
   icon?: string;
   lastOpenedAt?: string;
+  folderId?: string;
+  fileSize?: number;
+};
+
+export type DocFolder = {
+  id: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 const DOC_META_EVENT = "docs:meta-updated";
+export const DOC_FOLDER_EVENT = "docs:folder-updated";
 
 export const DOC_COLLECTION_KEY = "fd.docs.collection";
 export const DOC_CONTENT_PREFIX = "fd.docs.content:";
 export const DOC_SNAPSHOT_PREFIX = "fd.docs.snapshots:";
+export const DOC_FOLDER_KEY = "fd.docs.folders";
 export const DOC_CONTENT_KEY = (id: string) => `${DOC_CONTENT_PREFIX}${id}`;
 export const DOC_SNAPSHOT_KEY = (id: string) => `${DOC_SNAPSHOT_PREFIX}${id}`;
 
 const isBrowser = () => typeof window !== "undefined";
+
+const slugifyFolderName = (value: string) => {
+  const trimmed = value.trim();
+  if (!trimmed) return `folder-${Math.random().toString(36).slice(2, 7)}`;
+  const encoded = encodeURIComponent(trimmed.toLowerCase());
+  const normalized = encoded
+    .replace(/%/g, "-")
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-|-$/g, "");
+  return `folder-${normalized || Math.random().toString(36).slice(2, 7)}`;
+};
+
+const nowIso = () => new Date().toISOString();
+
+const DEFAULT_FOLDERS: DocFolder[] = (() => {
+  const base = new Map<string, DocFolder>();
+  const ensure = (name: string, color?: string) => {
+    const key = name.trim();
+    if (!key || base.has(key)) return;
+    base.set(key, {
+      id: slugifyFolderName(key),
+      name: key,
+      color,
+      icon: "📁",
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    });
+  };
+  ensure("내 드라이브", "#0ea5e9");
+  DOC_MOCKS.forEach((doc) => {
+    const primary = doc.location?.split("/")?.[0]?.trim();
+    if (primary) ensure(primary, doc.color);
+  });
+  return Array.from(base.values());
+})();
 
 const cloneDocs = (docs: DocMeta[]): DocMeta[] =>
   docs.map((doc) => ({ ...doc, tags: doc.tags ? [...doc.tags] : undefined }));
@@ -46,11 +96,25 @@ const normalizeDocMeta = (doc: DocMeta): DocMeta => ({
   color: doc.color,
   icon: doc.icon,
   lastOpenedAt: doc.lastOpenedAt,
+  folderId: doc.folderId,
+  fileSize: doc.fileSize,
 });
 
 const writeCollection = (list: DocMeta[]) => {
   if (!isBrowser()) return;
   window.localStorage.setItem(DOC_COLLECTION_KEY, JSON.stringify(list));
+};
+
+const writeFolders = (list: DocFolder[]) => {
+  if (!isBrowser()) return;
+  window.localStorage.setItem(DOC_FOLDER_KEY, JSON.stringify(list));
+};
+
+const stripFolderFromLocation = (location?: string) => {
+  if (!location) return "";
+  const parts = location.split("/");
+  if (parts.length <= 1) return "";
+  return parts.slice(1).join("/").trim();
 };
 
 export function readDocCollection(): DocMeta[] {
@@ -147,4 +211,115 @@ export function nextUntitledName(existing: DocMeta[], prefix = "새 문서") {
     if (!existingNames.has(candidate)) return candidate;
   }
   return `${prefix} ${Math.random().toString(36).slice(2, 5)}`;
+}
+
+export function readDocFolders(): DocFolder[] {
+  if (!isBrowser()) return [...DEFAULT_FOLDERS];
+  try {
+    const raw = window.localStorage.getItem(DOC_FOLDER_KEY);
+    if (!raw) {
+      writeFolders(DEFAULT_FOLDERS);
+      return [...DEFAULT_FOLDERS];
+    }
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.map((folder: DocFolder) => ({
+        id: folder.id || slugifyFolderName(folder.name || "내 드라이브"),
+        name: folder.name || "내 드라이브",
+        color: folder.color,
+        icon: folder.icon || "📁",
+        description: folder.description,
+        createdAt: folder.createdAt || nowIso(),
+        updatedAt: folder.updatedAt || nowIso(),
+      }));
+    }
+  } catch {
+    // ignore parse errors
+  }
+  writeFolders(DEFAULT_FOLDERS);
+  return [...DEFAULT_FOLDERS];
+}
+
+export function createDocFolder(name: string, color?: string, icon = "📁"): DocFolder {
+  if (!isBrowser()) {
+    return {
+      id: slugifyFolderName(name),
+      name,
+      color,
+      icon,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+  }
+  const folders = readDocFolders();
+  const trimmed = name.trim();
+  if (!trimmed) return folders[0];
+  const existing = folders.find((folder) => folder.name === trimmed);
+  if (existing) return existing;
+  const next: DocFolder = {
+    id: slugifyFolderName(trimmed),
+    name: trimmed,
+    color: color || `hsl(${Math.floor(Math.random() * 360)} 70% 45%)`,
+    icon,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  const updated = [...folders, next];
+  writeFolders(updated);
+  window.dispatchEvent(new CustomEvent(DOC_FOLDER_EVENT, { detail: { action: "add", folder: next } }));
+  return next;
+}
+
+export function getDocFolderById(id: string): DocFolder | undefined {
+  return readDocFolders().find((folder) => folder.id === id);
+}
+
+export function updateDocFolder(id: string, patch: Partial<DocFolder>): DocFolder | undefined {
+  if (!isBrowser()) return undefined;
+  const folders = readDocFolders();
+  const index = folders.findIndex((folder) => folder.id === id);
+  if (index === -1) return undefined;
+  const updatedFolder: DocFolder = {
+    ...folders[index],
+    ...patch,
+    id,
+    updatedAt: nowIso(),
+  };
+  const next = [...folders];
+  next[index] = updatedFolder;
+  writeFolders(next);
+  window.dispatchEvent(new CustomEvent(DOC_FOLDER_EVENT, { detail: { action: "update", folder: updatedFolder } }));
+  return updatedFolder;
+}
+
+export function deleteDocFolder(id: string) {
+  if (!isBrowser()) return;
+  const folders = readDocFolders();
+  const target = folders.find((folder) => folder.id === id);
+  if (!target) return;
+  const nextFolders = folders.filter((folder) => folder.id !== id);
+  writeFolders(nextFolders);
+  window.dispatchEvent(new CustomEvent(DOC_FOLDER_EVENT, { detail: { action: "delete", folderId: id } }));
+  const docs = readDocCollection();
+  docs.forEach((doc) => {
+    if (doc.folderId === id) {
+      const suffix = stripFolderFromLocation(doc.location);
+      updateDocMeta(doc.id, {
+        folderId: undefined,
+        location: suffix || "내 드라이브",
+      });
+    }
+  });
+}
+
+export function assignDocToFolder(docId: string, folderId?: string): DocMeta | undefined {
+  const target = getDocMetaById(docId);
+  if (!target) return undefined;
+  const folder = folderId ? getDocFolderById(folderId) : undefined;
+  const suffix = target.location ? target.location.split("/").slice(1).join("/").trim() : "";
+  const nextLocation = folder ? `${folder.name}${suffix ? ` / ${suffix}` : ""}` : suffix || "내 드라이브";
+  return updateDocMeta(docId, {
+    folderId,
+    location: nextLocation,
+  });
 }
