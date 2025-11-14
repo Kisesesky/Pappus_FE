@@ -26,6 +26,12 @@ import { useChat } from '@/store/chat';
 import type { Channel } from '@/types/chat';
 import { listIssues, type Issue } from '@/lib/api';
 import Button from '@/components/ui/button';
+import {
+  DashboardBackgroundSetting,
+  DEFAULT_DASHBOARD_BACKGROUND,
+  parseDashboardBackground,
+  serializeDashboardBackground,
+} from '@/lib/dashboardBackground';
 
 export type DashboardProject = {
   id: string;
@@ -379,7 +385,9 @@ export default function DashboardView({
   events = [],
 }: DashboardViewProps) {
   const router = useRouter();
-  const [bg, setBg] = useState<string | undefined>(backgroundUrl);
+  const [bgSetting, setBgSetting] = useState<DashboardBackgroundSetting | null>(
+    backgroundUrl ? { type: 'image', value: backgroundUrl } : DEFAULT_DASHBOARD_BACKGROUND,
+  );
   const [uploadedBg, setUploadedBg] = useState<string | undefined>();
   const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_WIDGETS);
   const [issues, setIssues] = useState<Issue[]>([]);
@@ -392,10 +400,11 @@ export default function DashboardView({
   const eventList = events.length ? events : FALLBACK_EVENTS;
   const docHighlightList = DOC_HIGHLIGHTS;
 
-  const { channelActivity, channels, setChannel } = useChat((state) => ({
+  const { channelActivity, channels, setChannel, channelId } = useChat((state) => ({
     channelActivity: state.channelActivity,
     channels: state.channels,
     setChannel: state.setChannel,
+    channelId: state.channelId,
   }));
 
   const channelMap = useMemo(() => {
@@ -412,8 +421,20 @@ export default function DashboardView({
         const uploaded = window.localStorage.getItem(UPLOADED_BG_KEY);
         const savedWidgets = window.localStorage.getItem(WIDGETS_KEY);
 
-        if (storedBg) setBg(storedBg);
-        if (uploaded) setUploadedBg(uploaded);
+        const parsedBg = parseDashboardBackground(storedBg);
+        if (parsedBg) {
+          setBgSetting(parsedBg);
+        } else {
+          setBgSetting(DEFAULT_DASHBOARD_BACKGROUND);
+          window.localStorage.setItem(BG_KEY, serializeDashboardBackground(DEFAULT_DASHBOARD_BACKGROUND));
+        }
+        if (uploaded) {
+          setUploadedBg(uploaded);
+        } else if (parsedBg?.type === 'image' && parsedBg.value.startsWith('data:')) {
+          setUploadedBg(parsedBg.value);
+        } else {
+          setUploadedBg(undefined);
+        }
 
         setWidgets(sanitizeWidgets(savedWidgets ? JSON.parse(savedWidgets) : undefined));
       } catch {
@@ -629,37 +650,67 @@ const quickActions: {
     },
   ];
 
-  const heroVisual = useMemo(() => {
-    const candidate = uploadedBg ?? bg;
-    if (!candidate || candidate.trim().length === 0) return undefined;
-    return candidate;
-  }, [bg, uploadedBg]);
+  const heroBackground = useMemo<DashboardBackgroundSetting | null>(() => {
+    if (uploadedBg) return { type: 'image', value: uploadedBg };
+    return bgSetting;
+  }, [bgSetting, uploadedBg]);
 
-  const heroOverlayStyle = useMemo<CSSProperties | undefined>(() => {
-    if (!heroVisual) return undefined;
-    if (heroVisual.startsWith('#')) {
+  const heroSectionStyle = useMemo<CSSProperties | undefined>(() => {
+    if (!heroBackground) return undefined;
+    if (heroBackground.type === 'color') {
       return {
-        background: `linear-gradient(135deg, ${heroVisual} 0%, rgba(255, 255, 255, 0.65))`,
+        background: `linear-gradient(135deg, ${heroBackground.value} 0%, rgba(15,23,42,0.05))`,
       };
     }
-    return {
-      backgroundImage: `linear-gradient(0deg, rgba(9, 30, 66, 0.32), rgba(9, 30, 66, 0.32)), url(${heroVisual})`,
-      backgroundPosition: 'center',
-      backgroundSize: 'cover',
-    };
-  }, [heroVisual]);
+    if (heroBackground.type === 'image') {
+      return {
+        backgroundImage: `linear-gradient(0deg, rgba(9, 30, 66, 0.42), rgba(9, 30, 66, 0.25)), url(${heroBackground.value})`,
+        backgroundPosition: 'center',
+        backgroundSize: 'cover',
+      };
+    }
+    return undefined;
+  }, [heroBackground]);
+
+  const ensureChatDetail = useCallback(
+    async (targetId?: string) => {
+      const fallback = targetId ?? channelId ?? channels[0]?.id;
+      if (!fallback) {
+        router.push('/chat');
+        return null;
+      }
+      await setChannel(fallback);
+      router.push(`/chat/${encodeURIComponent(fallback)}`);
+      return fallback;
+    },
+    [channelId, channels, router, setChannel],
+  );
 
   const openChannel = useCallback(
     async (id: string) => {
-      try {
-        if (channelMap.has(id)) {
-          await setChannel(id);
-        }
-      } finally {
+      if (!channelMap.has(id)) {
         router.push('/chat');
+        return;
       }
+      await ensureChatDetail(id);
     },
-    [channelMap, router, setChannel],
+    [channelMap, ensureChatDetail, router],
+  );
+
+  const handleQuickActionClick = useCallback(
+    (actionId: string, handler?: () => void) => {
+      if (actionId === 'chat') {
+        void (async () => {
+          const target = await ensureChatDetail();
+          if (target && typeof window !== 'undefined') {
+            window.setTimeout(() => window.dispatchEvent(new Event('chat:open-create-channel')), 300);
+          }
+        })();
+        return;
+      }
+      handler?.();
+    },
+    [ensureChatDetail],
   );
 
   const renderWidget = (id: WidgetId): JSX.Element | null => {
@@ -1100,8 +1151,25 @@ const quickActions: {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-background">
       <div className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col gap-5 px-3 py-6 lg:px-7">
-        <section className="rounded-3xl border border-border bg-white px-5 py-6 shadow-sm">
-          <div className="flex flex-col gap-5">
+        <section
+          className={clsx(
+            'relative overflow-hidden rounded-3xl border border-border shadow-sm',
+            heroBackground ? 'bg-transparent' : 'bg-panel',
+          )}
+          style={heroSectionStyle}
+        >
+          {heroBackground?.type === 'iframe' && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <iframe
+                src={heroBackground.value}
+                title="Dashboard background video"
+                className="h-full w-full scale-110 transform-gpu border-0 object-cover opacity-60"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-transparent" />
+            </div>
+          )}
+          <div className="relative z-10 flex flex-col gap-5 bg-panel px-5 py-6 shadow-inner">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full bg-secondary/20 px-3 py-1 text-xs font-semibold text-secondary">
                 <PanelsTopLeft size={16} />
@@ -1134,7 +1202,7 @@ const quickActions: {
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    onClick={action.onClick}
+                    onClick={() => handleQuickActionClick(action.id, action.onClick)}
                   >
                     <Icon size={14} />
                     {action.label}
@@ -1207,3 +1275,6 @@ const quickActions: {
     </div>
   );
 }
+
+
+

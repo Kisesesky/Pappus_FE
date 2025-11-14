@@ -27,6 +27,10 @@ import { rtbroadcast, rtlisten } from "@/lib/realtime";
 
 const VIEWMODE_KEY = 'fd.chat.viewmode';
 
+type ChatViewProps = {
+  initialChannelId?: string;
+};
+
 function DayDivider({ ts }: { ts:number }) {
   const d = new Date(ts);
   const label = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
@@ -47,7 +51,7 @@ function NewDivider() {
   );
 }
 
-export default function ChatView() {
+export default function ChatView({ initialChannelId }: ChatViewProps = {}) {
   const {
     me, users, channelId, channels, messages, lastReadAt, typingUsers, pinnedByChannel, savedByUser, channelMembers,
     send, setChannel, loadChannels, initRealtime, updateMessage, deleteMessage, restoreMessage,
@@ -91,6 +95,12 @@ export default function ChatView() {
 
   /** 커맨드 팔레트 */
   const [cmdOpen, setCmdOpen] = useState(false);
+
+  useEffect(() => {
+    if (!initialChannelId) return;
+    if (channelId === initialChannelId) return;
+    void setChannel(initialChannelId);
+  }, [initialChannelId, channelId, setChannel]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const isMac = /Mac|iPhone|iPad/.test(navigator.platform);

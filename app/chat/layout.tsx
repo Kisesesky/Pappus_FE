@@ -55,14 +55,22 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
     setSidebarOpen(false);
   }, [pathname]);
 
+  const showChatTools = (pathname?.startsWith("/chat/") ?? false) && pathname !== "/chat";
+
   return (
     <ToastProvider>
       <AppShell
         header={<Topbar />}
         sidebar={<Sidebar />}
-        rightPanel={<div className="hidden md:block"><ChatRightPanel /></div>}
-        rightWidth={380}
-        mainScrollable={false}
+        rightPanel={
+          showChatTools ? (
+            <div className="hidden md:block">
+              <ChatRightPanel />
+            </div>
+          ) : null
+        }
+        rightWidth={showChatTools ? 380 : undefined}
+        mainScrollable={!showChatTools}
       >
         {children}
       </AppShell>
@@ -71,17 +79,21 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
         <Sidebar />
       </Drawer>
 
-      <Drawer open={open} onOpenChange={setOpen} title="Threads / AI">
-        <ChatRightPanel />
-      </Drawer>
+      {showChatTools && (
+        <>
+          <Drawer open={open} onOpenChange={setOpen} title="Threads / AI">
+            <ChatRightPanel />
+          </Drawer>
 
-      <button
-        className="md:hidden fixed bottom-4 right-4 z-40 rounded-full border border-border bg-panel shadow-panel px-4 py-2 text-sm"
-        onClick={() => setOpen(true)}
-        aria-label="Open chat right panel"
-      >
-        Threads
-      </button>
+          <button
+            className="md:hidden fixed bottom-4 right-4 z-40 rounded-full border border-border bg-panel shadow-panel px-4 py-2 text-sm"
+            onClick={() => setOpen(true)}
+            aria-label="Open chat right panel"
+          >
+            Threads
+          </button>
+        </>
+      )}
 
       <ProfilePopover />
     </ToastProvider>

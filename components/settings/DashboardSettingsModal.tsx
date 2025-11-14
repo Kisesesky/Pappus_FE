@@ -8,6 +8,13 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import {
+  DashboardBackgroundSetting,
+  DEFAULT_DASHBOARD_BACKGROUND,
+  DASHBOARD_VIDEO_EMBED,
+  parseDashboardBackground,
+  serializeDashboardBackground,
+} from '@/lib/dashboardBackground';
 
 const BG_KEY = 'dashboard:prefs:bg';
 const UPLOADED_BG_KEY = 'dashboard:prefs:uploaded-bg';
@@ -17,9 +24,28 @@ const colorChips = [
   '#e5e7eb', '#ede9fe', '#f5e1f9', '#fde6cf', '#fef9c3', '#d9eadb', '#dbeafe', '#c7c9de', '#544c5a', '#3b2f2a', '#19443f', '#1f2937'
 ];
 
-const bgThumbs = [
-  '/bg/purple.jpg', '/bg/pool.jpg', '/bg/desert.jpg', '/bg/cloud.jpg', '/bg/car.jpg'
+type MediaOption = {
+  id: string;
+  label: string;
+  type: 'image' | 'iframe';
+  src: string;
+};
+
+const mediaOptions: MediaOption[] = [
+  { id: 'purple', label: 'Purple lights', type: 'image', src: '/bg/purple.jpg' },
+  { id: 'pool', label: 'Pool reflections', type: 'image', src: '/bg/pool.jpg' },
+  { id: 'desert', label: 'Golden desert', type: 'image', src: '/bg/desert.jpg' },
+  { id: 'cloud', label: 'Cloud tide', type: 'image', src: '/bg/cloud.jpg' },
+  { id: 'car', label: 'City drive', type: 'image', src: '/bg/car.jpg' },
+  { id: 'pinterest-video', label: 'Pinterest motion', type: 'iframe', src: DASHBOARD_VIDEO_EMBED },
 ];
+
+type MediaSelection = { type: 'image' | 'iframe'; value: string; id?: string };
+const videoOption = mediaOptions.find((option) => option.type === 'iframe');
+const defaultMediaSelection: MediaSelection | null =
+  DEFAULT_DASHBOARD_BACKGROUND.type === 'iframe'
+    ? { type: 'iframe', value: DEFAULT_DASHBOARD_BACKGROUND.value, id: videoOption?.id ?? 'video-default' }
+    : null;
 
 type WidgetState = { id: string; label: string; description: string; visible: boolean };
 
@@ -92,26 +118,58 @@ type Props = { open: boolean; onClose: () => void };
 
 export default function DashboardSettingsModal({ open, onClose }: Props) {
   const [activeTab, setActiveTab] = useState<'all' | 'google'>('all');
-  const [bgColor, setBgColor] = useState<string>(colorChips[0]);
-  const [bgImage, setBgImage] = useState<string>(bgThumbs[0]);
+  const [bgColor, setBgColor] = useState<string>(
+    DEFAULT_DASHBOARD_BACKGROUND.type === 'color' ? DEFAULT_DASHBOARD_BACKGROUND.value : colorChips[0],
+  );
+  const [mediaSelection, setMediaSelection] = useState<MediaSelection | null>(defaultMediaSelection);
   const [uploadedBg, setUploadedBg] = useState<string | undefined>();
   const [widgets, setWidgets] = useState<WidgetState[]>(() => defaultWidgets.map((item) => ({ ...item })));
 
   // 초기 로드 (localStorage)
   useEffect(() => {
     if (!open) return;
-    const savedBg = localStorage.getItem(BG_KEY);
+    const savedBgRaw = localStorage.getItem(BG_KEY);
     const uploaded = localStorage.getItem(UPLOADED_BG_KEY);
     const ws = localStorage.getItem(WIDGETS_KEY);
-    if (savedBg) setBgImage(savedBg);
-    if (uploaded) setUploadedBg(uploaded);
+
+    const parsed = parseDashboardBackground(savedBgRaw);
+    if (parsed?.type === 'color') {
+      setBgColor(parsed.value);
+      setMediaSelection(null);
+    } else if (parsed?.type) {
+      setMediaSelection({ type: parsed.type === 'iframe' ? 'iframe' : 'image', value: parsed.value });
+    } else {
+      setMediaSelection(defaultMediaSelection);
+    }
+
+    if (uploaded) {
+      setUploadedBg(uploaded);
+      setMediaSelection({ type: 'image', value: uploaded, id: 'uploaded' });
+    } else if (parsed?.type === 'image' && parsed.value.startsWith('data:')) {
+      setUploadedBg(parsed.value);
+    } else {
+      setUploadedBg(undefined);
+    }
+
     setWidgets(sanitizeWidgets(ws ? JSON.parse(ws) : undefined));
   }, [open]);
 
   const save = () => {
-    // 배경: 이미지 우선 → 없으면 컬러값 저장(간단화)
-    localStorage.setItem(BG_KEY, bgImage || bgColor);
-    if (uploadedBg) localStorage.setItem(UPLOADED_BG_KEY, uploadedBg);
+    let payload: DashboardBackgroundSetting;
+    if (uploadedBg) {
+      payload = { type: 'image', value: uploadedBg };
+    } else if (mediaSelection) {
+      payload = { type: mediaSelection.type, value: mediaSelection.value };
+    } else {
+      payload = { type: 'color', value: bgColor };
+    }
+
+    localStorage.setItem(BG_KEY, serializeDashboardBackground(payload));
+    if (uploadedBg) {
+      localStorage.setItem(UPLOADED_BG_KEY, uploadedBg);
+    } else {
+      localStorage.removeItem(UPLOADED_BG_KEY);
+    }
     localStorage.setItem(WIDGETS_KEY, JSON.stringify(widgets));
     window.dispatchEvent(new CustomEvent('dashboard:prefs:changed'));
     onClose();
@@ -125,6 +183,7 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
     reader.onload = () => {
       const url = reader.result as string;
       setUploadedBg(url);
+      setMediaSelection({ type: 'image', value: url, id: 'uploaded' });
     };
     reader.readAsDataURL(f);
   };
@@ -141,15 +200,20 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
   const toggleWidget = (id: string) =>
     setWidgets((prev) => prev.map((w) => (w.id === id ? { ...w, visible: !w.visible } : w)));
 
-  const backgroundPreview = useMemo(
-    () => uploadedBg || bgImage,
-    [uploadedBg, bgImage]
-  );
+  const backgroundPreview = useMemo<DashboardBackgroundSetting>(() => {
+    if (uploadedBg) {
+      return { type: 'image', value: uploadedBg };
+    }
+    if (mediaSelection) {
+      return mediaSelection;
+    }
+    return { type: 'color', value: bgColor };
+  }, [uploadedBg, mediaSelection, bgColor]);
 
   return (
     <Modal open={open} onClose={onClose} title="대시보드 설정" widthClass="max-w-5xl" className="overflow-hidden">
       {/* 상단 헤더 영역 */}
-      <div className="h-14 bg-white border-b flex items-center px-6 justify-between">
+      <div className="h-14 bg-panel border-b flex items-center px-6 justify-between">
         <h3 className="text-base font-semibold">위젯 설정</h3>
         <button onClick={save} className="inline-flex items-center gap-2 rounded-md bg-brand text-white px-3 py-2 text-sm hover:bg-brand/90">
           <Save size={16} /> 저장
@@ -158,7 +222,7 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
         {/* 좌: 배경 설정 */}
-        <section className="lg:col-span-1 p-6 border-r space-y-6">
+        <section className="lg:col-span-1 p-6 border-r border-border/70 space-y-6">
           <div>
             <div className="text-sm font-medium mb-3">배경</div>
             {/* 색 칩 */}
@@ -166,29 +230,47 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
               {colorChips.map(c => (
                 <button
                   key={c}
-                  onClick={() => { setBgColor(c); setBgImage(''); }}
-                  className={clsx('h-8 w-8 rounded-full border', bgColor === c && !bgImage ? 'ring-2 ring-brand' : 'border-zinc-200')}
+                  onClick={() => { setBgColor(c); setMediaSelection(null); setUploadedBg(undefined); }}
+                  className={clsx('h-8 w-8 rounded-full border', bgColor === c && !mediaSelection ? 'ring-2 ring-brand' : 'border-border')}
                   style={{ backgroundColor: c }}
                   aria-label={`색 ${c}`}
                 />
               ))}
             </div>
 
-            {/* 이미지 썸네일 */}
+            {/* 이미지 / 영상 썸네일 */}
             <div className="mt-4 grid grid-cols-3 gap-3">
-              {bgThumbs.map(src => (
-                <button
-                  key={src}
-                  onClick={() => setBgImage(src)}
-                  className={clsx(
-                    'h-16 w-full rounded-lg bg-cover bg-center border-2 transition',
-                    bgImage === src ? 'border-brand' : 'border-transparent'
-                  )}
-                  style={{ backgroundImage: `url(${src})` }}
-                />
-              ))}
+              {mediaOptions.map(option => {
+                const isActive = mediaSelection?.value === option.src && mediaSelection.type === option.type;
+                if (option.type === 'iframe') {
+                  return (
+                    <button
+                      key={option.id}
+                      onClick={() => { setMediaSelection({ type: 'iframe', value: option.src, id: option.id }); setUploadedBg(undefined); }}
+                      className={clsx(
+                        'h-16 w-full rounded-lg border-2 border-dashed px-2 text-xs font-medium uppercase tracking-wide text-muted transition hover:border-brand',
+                        isActive ? 'border-brand bg-subtle/60 text-foreground' : 'border-border'
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                }
+                return (
+                  <button
+                    key={option.id}
+                    onClick={() => { setMediaSelection({ type: 'image', value: option.src, id: option.id }); setUploadedBg(undefined); }}
+                    className={clsx(
+                      'h-16 w-full rounded-lg bg-cover bg-center border-2 transition',
+                      isActive ? 'border-brand' : 'border-transparent'
+                    )}
+                    style={{ backgroundImage: `url(${option.src})` }}
+                    aria-label={option.label}
+                  />
+                );
+              })}
               {/* 업로드 */}
-              <label className="h-16 w-full rounded-lg border border-dashed grid place-items-center text-xs text-zinc-500 cursor-pointer hover:bg-zinc-50">
+              <label className="h-16 w-full rounded-lg border border-dashed border-border grid place-items-center text-xs text-muted cursor-pointer hover:bg-subtle/60">
                 <Upload size={16} />
                 <span className="mt-1">업로드</span>
                 <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
@@ -196,33 +278,49 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
             </div>
 
             {/* 갤러리 더보기 */}
-            <button className="mt-3 inline-flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900">
+            <button className="mt-3 inline-flex items-center gap-1 text-xs text-muted hover:text-foreground">
               갤러리 더보기 <ChevronRight size={14} />
             </button>
 
             {/* 선택 프리뷰 */}
             <div className="mt-4">
               <div className="text-xs text-muted mb-1">미리보기</div>
-              <div
-                className="h-24 w-full rounded-lg bg-cover bg-center border"
-                style={{
-                  backgroundImage: backgroundPreview ? `url(${backgroundPreview})` : 'none',
-                  backgroundColor: !backgroundPreview ? bgColor : undefined,
-                }}
-              />
+              <div className="relative h-24 w-full overflow-hidden rounded-lg border border-border bg-panel">
+                {backgroundPreview.type === 'image' && (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${backgroundPreview.value})` }}
+                  />
+                )}
+                {backgroundPreview.type === 'iframe' && (
+                  <iframe
+                    src={backgroundPreview.value}
+                    title="Background preview"
+                    className="absolute inset-0 h-full w-full border-0 object-cover"
+                    loading="lazy"
+                  />
+                )}
+                {backgroundPreview.type === 'color' && (
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: `linear-gradient(135deg, ${backgroundPreview.value} 0%, rgba(15,23,42,0.65))` }}
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/15 to-transparent" />
+              </div>
             </div>
           </div>
         </section>
 
         {/* 우: 위젯 탭 + 리스트 */}
-        <section className="lg:col-span-2 p-6">
+        <section className="lg:col-span-2 p-6 bg-panel">
           {/* 탭바 */}
-          <div className="flex items-center gap-6 border-b">
+          <div className="flex items-center gap-6 border-b border-border">
             <button
               onClick={() => setActiveTab('all')}
               className={clsx(
                 'px-2 py-3 text-sm -mb-px border-b-2',
-                activeTab === 'all' ? 'border-zinc-900 font-semibold' : 'border-transparent text-zinc-500'
+                activeTab === 'all' ? 'border-foreground font-semibold' : 'border-transparent text-muted'
               )}
             >
               전체 위젯
@@ -231,7 +329,7 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
               onClick={() => setActiveTab('google')}
               className={clsx(
                 'px-2 py-3 text-sm -mb-px border-b-2 relative',
-                activeTab === 'google' ? 'border-zinc-900 font-semibold' : 'border-transparent text-zinc-500'
+                activeTab === 'google' ? 'border-foreground font-semibold' : 'border-transparent text-muted'
               )}
             >
               Google 위젯
@@ -253,17 +351,17 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
                             ref={prov.innerRef}
                             {...prov.draggableProps}
                             {...prov.dragHandleProps}
-                            className="flex items-center justify-between rounded-xl border bg-white px-4 py-3"
+                            className="flex items-center justify-between rounded-xl border border-border bg-panel px-4 py-3"
                           >
                             <div className="flex items-center gap-3">
-                              <GripVertical size={16} className="text-zinc-400" />
+                              <GripVertical size={16} className="text-muted" />
                               <div>
                                 <div className="text-sm font-medium">{w.label}</div>
-                                <div className="text-xs text-zinc-500">{w.description}</div>
+                                <div className="text-xs text-muted">{w.description}</div>
                               </div>
                             </div>
                             <button onClick={() => toggleWidget(w.id)} className="p-1">
-                              {w.visible ? <Eye size={16} /> : <EyeOff size={16} className="text-zinc-400" />}
+                              {w.visible ? <Eye size={16} /> : <EyeOff size={16} className="text-muted" />}
                             </button>
                           </li>
                         )}
@@ -278,12 +376,12 @@ export default function DashboardSettingsModal({ open, onClose }: Props) {
             {/* 오른쪽 영역처럼 보이는 미니 프리뷰 (2열 카드 그리드) */}
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
               {widgets.filter(w => w.visible).slice(0, 4).map(w => (
-                <div key={w.id} className="rounded-xl border bg-zinc-50 p-4">
-                  <div className="h-4 w-24 rounded bg-zinc-200" />
+                <div key={w.id} className="rounded-xl border border-border bg-subtle/60 p-4">
+                  <div className="h-4 w-24 rounded bg-muted/30" />
                   <div className="mt-3 space-y-2">
-                    <div className="h-3 w-full rounded bg-zinc-200" />
-                    <div className="h-3 w-5/6 rounded bg-zinc-200" />
-                    <div className="h-3 w-2/3 rounded bg-zinc-200" />
+                    <div className="h-3 w-full rounded bg-muted/30" />
+                    <div className="h-3 w-5/6 rounded bg-muted/30" />
+                    <div className="h-3 w-2/3 rounded bg-muted/30" />
                   </div>
                 </div>
               ))}

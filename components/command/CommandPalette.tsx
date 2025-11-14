@@ -79,7 +79,7 @@ export default function CommandPalette() {
 
   const goToSearchItem = (item: ReturnType<typeof searchAll>["results"][number]) => {
     if (item.type === "chat") {
-      router.push("/chat");
+      router.push(`/chat/${encodeURIComponent(item.channelId)}`);
       setTimeout(() => { useChat.getState().setChannel(item.channelId); }, 200);
     } else if (item.type === "issue") {
       router.push("/issues");

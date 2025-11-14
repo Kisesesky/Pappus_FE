@@ -15,13 +15,13 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
+  ChevronRight,
   Settings,
   Hash,
   Star,
   VolumeX,
   PlusCircle,
   PanelsTopLeft,
-  FileText,
   Table,
   Check,
   Trash2,
@@ -51,13 +51,8 @@ const NavItem = ({ href, label, icon: Icon, active = false }: NavItemProps) => (
   </Link>
 );
 
-const DOC_PAGE_MENU = [
-  { id: "spec", title: "제품 스펙", description: "MVP 요구사항과 범위" },
-  { id: "roadmap", title: "제품 로드맵", description: "분기별 마일스톤" },
-  { id: "retro", title: "프로젝트 회고", description: "잘된 점과 개선점" },
-];
-
 const DEFAULT_WORKSPACE_BG = "#0EA5E9";
+const VISIBLE_CHAT_GROUPS: ChatGroupKey[] = ["starred", "channels"];
 
 const normalizeIconValue = (value?: string) => {
   if (!value) return "";
@@ -283,8 +278,6 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [chatExpanded, setChatExpanded] = useState(true);
-  const [docsExpanded, setDocsExpanded] = useState(true);
-  const [activeDocId, setActiveDocId] = useState<string>("spec");
   const [fallbackCollapsed, setFallbackCollapsed] = useState<Record<ChatGroupKey, boolean>>({
     starred: false,
     channels: false,
@@ -306,7 +299,6 @@ export default function Sidebar() {
 
   useEffect(() => {
     if (pathname?.startsWith("/chat")) setChatExpanded(true);
-    if (pathname?.startsWith("/docs")) setDocsExpanded(true);
   }, [pathname]);
 
   useEffect(() => {
@@ -328,20 +320,6 @@ export default function Sidebar() {
       document.removeEventListener("keydown", handleKey);
     };
   }, [serverMenuOpen]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("fd.docs.active");
-    if (saved) setActiveDocId(saved);
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent<{ id?: string }>).detail;
-      if (detail?.id) {
-        setActiveDocId(detail.id);
-      }
-    };
-    window.addEventListener("docs:active-page", handler as EventListener);
-    return () => window.removeEventListener("docs:active-page", handler as EventListener);
-  }, []);
 
   const activeWorkspace = useMemo(() => {
     return workspaces.find(ws => ws.id === workspaceId) || workspaces[0];
@@ -432,13 +410,18 @@ export default function Sidebar() {
     return id;
   }, [channelMap, users]);
 
+  const ensureChannelContext = useCallback(async (targetId?: string) => {
+    const fallback = targetId ?? channelId ?? channels[0]?.id ?? allChannels[0]?.id;
+    if (!fallback) return null;
+    await setChannel(fallback);
+    router.push(`/chat/${encodeURIComponent(fallback)}`);
+    return fallback;
+  }, [channelId, channels, allChannels, setChannel, router]);
+
   const handleSelectChannel = useCallback((id: string) => {
-    void setChannel(id);
-    if (!pathname?.startsWith("/chat")) {
-      router.push("/chat");
-    }
     setChatExpanded(true);
-  }, [setChannel, pathname, router]);
+    void ensureChannelContext(id);
+  }, [ensureChannelContext]);
 
   const handleToggleStar = useCallback((id: string) => {
     toggleStar(id);
@@ -453,22 +436,22 @@ export default function Sidebar() {
     }
   }, [sectionMeta, toggleSectionCollapsed]);
 
-  const handleOpenCreateChannel = useCallback(() => {
+  const handleOpenCreateChannel = useCallback(async () => {
     setChatExpanded(true);
+    const target = await ensureChannelContext();
+    if (target && typeof window !== "undefined") {
+      window.setTimeout(() => window.dispatchEvent(new Event("chat:open-create-channel")), 300);
+    }
+  }, [ensureChannelContext]);
+
+  const handleNavigateChat = useCallback(() => {
     if (!pathname?.startsWith("/chat")) {
       router.push("/chat");
-    }
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("chat:open-create-channel"));
     }
   }, [pathname, router]);
 
   const toggleChatSection = useCallback(() => {
     setChatExpanded(prev => !prev);
-  }, []);
-
-  const toggleDocsSection = useCallback(() => {
-    setDocsExpanded(prev => !prev);
   }, []);
 
   useEffect(() => {
@@ -483,7 +466,7 @@ export default function Sidebar() {
     setFallbackCollapsed((prev) => {
       let changed = false;
       const next = { ...prev } as Record<ChatGroupKey, boolean>;
-      ( ["starred", "channels", "dms"] as ChatGroupKey[] ).forEach((key) => {
+      VISIBLE_CHAT_GROUPS.forEach((key) => {
         if (!sectionMeta.has(key) && prev[key] === undefined) {
           next[key] = false;
           changed = true;
@@ -498,15 +481,6 @@ export default function Sidebar() {
       router.push("/docs");
     }
   }, [pathname, router]);
-
-  const handleSelectDoc = useCallback((id: string) => {
-    setDocsExpanded(true);
-    setActiveDocId(id);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("fd.docs.active", id);
-    }
-    router.push(`/docs/${id}`);
-  }, [router]);
 
   const handleOpenWorkspaceSettings = useCallback(() => {
     setWorkspaceSettingsOpen(true);
@@ -682,11 +656,12 @@ export default function Sidebar() {
               icon={MessageSquare}
               label="Chat"
               open={chatExpanded}
+              onNavigate={handleNavigateChat}
               onToggle={toggleChatSection}
               active={pathname?.startsWith("/chat")}
             >
               <div className="space-y-4 pl-1">
-                {(["starred", "channels", "dms"] as ChatGroupKey[]).map((key, index) => {
+                {VISIBLE_CHAT_GROUPS.map((key, index) => {
                   const meta = sectionMeta.get(key);
                   const idsFromSection = meta?.ids ?? [];
                   const ids = (idsFromSection.length ? idsFromSection : defaultGroupIds[key]) ?? [];
@@ -771,38 +746,22 @@ export default function Sidebar() {
                 })}
               </div>
             </ExpandableNav>
-            <ExpandableNav
-              icon={BookText}
-              label="Docs"
-              open={docsExpanded}
-              onToggle={toggleDocsSection}
-              onNavigate={handleNavigateDocs}
-              active={pathname?.startsWith("/docs")}
+            <button
+              type="button"
+              onClick={handleNavigateDocs}
+              className={clsx(
+                "flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition",
+                pathname?.startsWith("/docs")
+                  ? "border-sidebar-primary/50 bg-sidebar-accent text-sidebar-foreground"
+                  : "border-border/40 text-sidebar-foreground/80 hover:border-sidebar-primary/40 hover:bg-sidebar-accent"
+              )}
             >
-              <div className="space-y-1 pl-1">
-                {DOC_PAGE_MENU.map((doc) => {
-                  const isActive = activeDocId === doc.id;
-                  return (
-                    <button
-                      key={doc.id}
-                      type="button"
-                      onClick={() => handleSelectDoc(doc.id)}
-                      className={clsx(
-                        "w-full rounded-md border px-3 py-2 text-left text-sm transition",
-                        isActive
-                          ? "border-border bg-subtle/70 text-foreground shadow-inner"
-                          : "border-transparent text-muted hover:bg-subtle/60"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <FileText size={14} className="text-muted" />
-                        <span className="truncate">{doc.title}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </ExpandableNav>
+              <span className="flex items-center gap-2">
+                <BookText size={16} />
+                Docs
+              </span>
+              <ChevronRight size={16} className="text-muted" />
+            </button>
           </div>
         </div>
       </div>

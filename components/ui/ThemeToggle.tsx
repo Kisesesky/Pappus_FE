@@ -3,35 +3,31 @@
 
 import { useEffect, useState } from "react";
 import { Sun, Moon, Monitor } from "lucide-react";
-
-type Theme = 'light' | 'dark' | 'system';
-const KEY = 'fd.theme';
-
-function applyTheme(t: Theme) {
-  const root = document.documentElement;
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const dark = t === 'system' ? prefersDark : t === 'dark';
-  root.classList.toggle('dark', dark);
-  root.setAttribute('data-theme', dark ? 'dark' : 'light');
-}
+import { applyTheme, getStoredTheme, persistTheme, ThemeMode } from "@/lib/theme";
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('system');
+  const [theme, setTheme] = useState<ThemeMode>('system');
 
   useEffect(() => {
-    const stored = (localStorage.getItem(KEY) as Theme) || 'system';
+    const stored = getStoredTheme();
     setTheme(stored);
     applyTheme(stored);
-
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => { if (stored === 'system') applyTheme('system'); };
-    mq.addEventListener?.('change', onChange);
-    return () => mq.removeEventListener?.('change', onChange);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(KEY, theme);
+    persistTheme(theme);
     applyTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => {
+      if (theme === 'system') {
+        applyTheme('system');
+      }
+    };
+    mq.addEventListener?.('change', onChange);
+    return () => mq.removeEventListener?.('change', onChange);
   }, [theme]);
 
   return (

@@ -2,15 +2,54 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/components/ui/Toast";
-import { Bell, Info, Menu, Search, Settings } from "lucide-react";
+import { Bell, Info, Menu, Monitor, Moon, Search, Settings, Sun } from "lucide-react";
 import CommandPalette from "@/components/command/CommandPalette";
 import SettingsModal from "@/components/settings/SettingsModal";
+import { applyTheme, getStoredTheme, nextThemeMode, persistTheme, ThemeMode } from "@/lib/theme";
+
+const THEME_ICONS: Record<ThemeMode, typeof Sun> = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
+};
+
+const THEME_LABELS: Record<ThemeMode, string> = {
+  light: "Light mode",
+  dark: "Dark mode",
+  system: "System mode",
+};
 
 export default function Topbar() {
   const { show } = useToast();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState<ThemeMode>("system");
+
+  useEffect(() => {
+    const stored = getStoredTheme();
+    setTheme(stored);
+    applyTheme(stored);
+  }, []);
+
+  useEffect(() => {
+    persistTheme(theme);
+    applyTheme(theme);
+  }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => {
+      if (theme === "system") {
+        applyTheme("system");
+      }
+    };
+    mq.addEventListener?.("change", onChange);
+    return () => mq.removeEventListener?.("change", onChange);
+  }, [theme]);
+
+  const ThemeIcon = useMemo(() => THEME_ICONS[theme], [theme]);
 
   return (
     <>
@@ -60,8 +99,13 @@ export default function Topbar() {
               <Info size={16} className="mr-1" />
               Help
             </button>
-            <button className="rounded-md px-3 py-2 text-sm font-medium text-sidebar-primary transition hover:bg-sidebar-primary/10">
-              Create
+            <button
+              className="rounded-md p-2 text-muted transition hover:bg-accent"
+              aria-label={THEME_LABELS[theme]}
+              onClick={() => setTheme((prev) => nextThemeMode(prev))}
+              title={THEME_LABELS[theme]}
+            >
+              <ThemeIcon size={18} />
             </button>
             <button className="rounded-md p-2 text-muted transition hover:bg-accent" aria-label="Notifications">
               <Bell size={18} />
