@@ -5,14 +5,23 @@ import AppShell from '@/components/layout/AppShell';
 import Sidebar from '@/components/layout/Sidebar';
 import Topbar from '@/components/layout/Topbar';
 import { ToastProvider } from '@/components/ui/Toast';
+import { useSidebarCollapse } from '@/hooks/useSidebarCollapse';
 
 export default function CalendarLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarCollapse();
+
   return (
     <ToastProvider>
       <AppShell
-        header={<Topbar />}
-        sidebar={<Sidebar />}
-        rightPanel={null}      // 캘린더도 기본은 우측 패널 없음
+        header={(
+          <Topbar
+            onToggleSidebarCollapse={() => setSidebarCollapsed((prev) => !prev)}
+            sidebarCollapsed={sidebarCollapsed}
+          />
+        )}
+        sidebar={<Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)} />}
+        sidebarWidth={sidebarCollapsed ? 80 : 288}
+        rightPanel={null}
         rightWidth={380}
       >
         {children}
@@ -20,4 +29,3 @@ export default function CalendarLayout({ children }: { children: React.ReactNode
     </ToastProvider>
   );
 }
-

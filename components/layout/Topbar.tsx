@@ -21,7 +21,12 @@ const THEME_LABELS: Record<ThemeMode, string> = {
   system: "System mode",
 };
 
-export default function Topbar() {
+type TopbarProps = {
+  onToggleSidebarCollapse?: () => void;
+  sidebarCollapsed?: boolean;
+};
+
+export default function Topbar({ onToggleSidebarCollapse, sidebarCollapsed }: TopbarProps = {}) {
   const { show } = useToast();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>("system");
@@ -63,6 +68,19 @@ export default function Topbar() {
           >
             <Menu size={20} />
           </button>
+
+          {onToggleSidebarCollapse && (
+            <button
+              type="button"
+              className="hidden rounded-md p-2 text-muted transition-colors hover:bg-accent md:inline-flex"
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              onClick={onToggleSidebarCollapse}
+            >
+              <span aria-hidden="true" className="text-base leading-none">
+                <Menu size={20} />
+              </span>
+            </button>
+          )}
 
           <div className="hidden items-center gap-3 md:flex">
             <Image

@@ -35,7 +35,12 @@ export default function MembersLayout({ children }: { children: React.ReactNode 
   return (
     <ToastProvider>
       <AppShell
-        header={<Topbar />}
+        header={
+          <Topbar
+            onToggleSidebarCollapse={() => setSidebarCollapsed((prev) => !prev)}
+            sidebarCollapsed={sidebarCollapsed}
+          />
+        }
         sidebar={<Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(prev => !prev)} />}
         sidebarWidth={sidebarCollapsed ? 80 : 288}
       >

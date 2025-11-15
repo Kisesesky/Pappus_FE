@@ -271,7 +271,11 @@ function ChannelRow({
   );
 }
 
-export default function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps = {}) {
+type ExpandedSidebarProps = {
+  onToggleCollapse?: () => void;
+};
+
+function ExpandedSidebar({ onToggleCollapse }: ExpandedSidebarProps = {}) {
   const {
     channels,
     allChannels,
@@ -490,10 +494,6 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
       return changed ? next : prev;
     });
   }, [chatExpanded, sectionMeta, toggleSectionCollapsed]);
-  if (collapsed) {
-    return <CollapsedSidebar pathname={pathname} onToggleCollapse={onToggleCollapse} />;
-  }
-
   const handleNavigateDocs = useCallback(() => {
     if (!pathname?.startsWith("/docs")) {
       router.push("/docs");
@@ -549,33 +549,8 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
   }, [deleteWorkspace, activeWorkspace, workspaceDeleteConfirm, workspaceSettingsSaving]);
 
   return (
-    <div className="flex min-h-0 w-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
-      <div className="flex items-center justify-between border-b border-sidebar-border px-3 py-4">
-        <div className="flex items-center gap-3">
-          <Image
-            src="/logo.png"
-            alt="Fourier logo"
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-md object-cover"
-            priority
-          />
-          <div className="flex flex-col leading-tight">
-            <span className="text-sm font-semibold">FOURIER</span>
-            <span className="text-[11px] uppercase tracking-[0.12em] text-muted">Workspace</span>
-          </div>
-        </div>
-        {onToggleCollapse && (
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            className="rounded-md p-2 text-muted transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            aria-label="Collapse sidebar"
-          >
-            <ChevronLeft size={16} />
-          </button>
-        )}
-      </div>
+    <div className="relative flex min-h-0 w-full flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      {onToggleCollapse && <div className="hidden md:block absolute -right-px top-0 h-full w-px bg-border" />}
 
       <div className="border-b border-sidebar-border px-3 py-4">
         <div className="flex items-center gap-3">
@@ -927,13 +902,14 @@ export default function Sidebar({ collapsed = false, onToggleCollapse }: Sidebar
 }
 
 type CollapsedSidebarProps = {
-  pathname: string | null;
   onToggleCollapse?: () => void;
 };
 
-function CollapsedSidebar({ pathname, onToggleCollapse }: CollapsedSidebarProps) {
+function CollapsedSidebar({ onToggleCollapse }: CollapsedSidebarProps) {
+  const pathname = usePathname();
   return (
-    <div className="flex h-full flex-col items-center justify-between gap-4 border-r border-sidebar-border bg-sidebar py-4 text-sidebar-foreground">
+    <div className="relative flex h-full flex-col items-center justify-between gap-4 border-r border-sidebar-border bg-sidebar py-4 text-sidebar-foreground">
+      {onToggleCollapse && <div className="hidden md:block absolute -right-px top-0 h-full w-px bg-border" />}
       <div className="flex flex-col items-center gap-3">
         <Image
           src="/logo.png"
@@ -943,14 +919,6 @@ function CollapsedSidebar({ pathname, onToggleCollapse }: CollapsedSidebarProps)
           className="h-9 w-9 rounded-md object-cover"
           priority
         />
-        <button
-          type="button"
-          onClick={onToggleCollapse}
-          className="rounded-full border border-border p-1 text-muted hover:text-sidebar-foreground"
-          aria-label="Expand sidebar"
-        >
-          <ChevronRight size={18} />
-        </button>
       </div>
 
       <nav className="flex flex-1 flex-col items-center gap-3">
@@ -982,6 +950,13 @@ function CollapsedSidebar({ pathname, onToggleCollapse }: CollapsedSidebarProps)
       </a>
     </div>
   );
+}
+
+export default function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps = {}) {
+  if (collapsed) {
+    return <CollapsedSidebar onToggleCollapse={onToggleCollapse} />;
+  }
+  return <ExpandedSidebar onToggleCollapse={onToggleCollapse} />;
 }
 
 
